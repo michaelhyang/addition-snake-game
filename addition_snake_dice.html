@@ -27,22 +27,35 @@
             min-height: 100vh;
             background-color: var(--light-bg);
             margin: 0;
-            padding: 20px 10px;
+            padding: 10px 5px; /* 頁面整體內邊距 */
             box-sizing: border-box;
             color: var(--text-color);
+            line-height: 1.35; /* 整體縮短行間距，比上次更緊湊一點 */
         }
 
         .game-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px; /* 主要區塊間的間距 */
             width: 100%;
             max-width: 900px;
         }
 
-        .game-info-container, .game-settings-container {
+        .game-info-and-board-container { /* 新增的整合容器 */
             background-color: var(--white-bg);
-            padding: 25px 20px;
+            padding: 12px; /* 縮小整合容器的內邊距 */
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+            display: flex; /* 讓內部元素可以 flex 排列 */
+            flex-direction: column; /* 預設在手機上垂直堆疊 */
+            align-items: center; /* 居中對齊內部元素 */
+            gap: 10px; /* 整合容器內部元素間的間距 */
+        }
+
+        .game-settings-container { /* 設定區塊保持獨立 */
+            background-color: var(--white-bg);
+            padding: 15px 15px;
             border-radius: 12px;
             box-shadow: var(--shadow);
             flex-shrink: 0;
@@ -51,92 +64,46 @@
 
         h1 {
             color: var(--primary-color);
-            margin-bottom: 15px;
-            font-size: 2em;
+            margin-bottom: 5px; /* 縮小主標題下邊距 */
+            font-size: 1.8em; /* 針對手機縮小標題 */
         }
         h2 {
             color: var(--secondary-color);
             margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 1.5em;
+            margin-bottom: 8px; /* 縮小次標題下邊距 */
+            font-size: 1.4em; /* 針對手機縮小次標題 */
         }
 
+        /* 更精簡的說明文字 */
         .instructions {
-            font-size: 0.95em;
-            margin-bottom: 20px;
-            line-height: 1.5;
+            font-size: 0.8em; /* 將說明文字字體縮小 */
+            margin-bottom: 8px; /* 縮小說明下邊距 */
+            line-height: 1.3; /* 縮短說明文字行高 */
             color: #555;
-        }
-
-        /* Settings specific styles */
-        .settings-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .setting-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .setting-item label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: var(--text-color);
-        }
-        .setting-item input {
-            padding: 8px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 1em;
-            width: 80px;
+            padding: 0 5px; /* 增加左右內邊距以防文字過於貼邊 */
             text-align: center;
-            -moz-appearance: textfield;
-        }
-        .setting-item input::-webkit-outer-spin-button,
-        .setting-item input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .start-game-button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            margin-top: 10px;
-        }
-        .start-game-button:hover {
-            background-color: #45a049;
-        }
-        .start-game-button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
         }
 
         /* Game Stats */
         .game-stats {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 25px;
+            margin-bottom: 12px; /* 縮小統計區塊下邊距 */
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px; /* 縮小統計項間距 */
+            width: 100%; /* 確保統計欄寬度 */
         }
 
         .stat-item {
-            font-size: 1.2em;
+            font-size: 1.1em; /* 縮小統計項目字體大小 */
             font-weight: bold;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         .stat-item span {
-            font-size: 1.5em;
-            margin-top: 5px;
+            font-size: 1.4em; /* 縮小統計數值字體大小 */
+            margin-top: 2px; /* 縮小數值上邊距 */
         }
         .current-sum .stat-value {
             color: var(--accent-color);
@@ -147,15 +114,15 @@
 
         /* Dice Styles */
         .dice-area {
-            margin-top: 20px;
+            margin-top: 8px; /* 縮小骰子區域上邊距 */
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 8px; /* 縮小骰子區塊間距 */
         }
         .dice-button {
-            width: 70px;
-            height: 70px;
+            width: 65px; /* 略微縮小骰子尺寸 */
+            height: 65px; /* 略微縮小骰子尺寸 */
             background-color: var(--white-bg);
             border: 3px solid var(--text-color);
             border-radius: 12px;
@@ -174,105 +141,68 @@
             background-color: #ddd;
         }
         .dice-dots {
-            width: 100%; /* Take full width of parent */
-            height: 100%; /* Take full height of parent */
+            width: 100%;
+            height: 100%;
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-            grid-template-rows: repeat(3, 1fr);    /* 3 equal rows */
-            padding: 8px; /* Padding from the dice edge to the dots */
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 8px;
             box-sizing: border-box;
-            gap: 0; /* No gap between grid cells themselves */
+            gap: 0;
         }
         .dot {
-            width: 18px; /* Dot size */
-            height: 18px; /* Dot size */
-            background-color: var(--text-color); /* Default black */
+            width: 16px; /* 略微縮小點的大小 */
+            height: 16px; /* 略微縮小點的大小 */
+            background-color: var(--text-color);
             border-radius: 50%;
-            display: none; /* Hidden by default, shown by CSS based on data-value */
-            /* Ensure dots are perfectly centered within their grid cell */
+            display: none;
             justify-self: center;
             align-self: center;
-            /* Optional: Add a small margin to dots for internal spacing within grid cells */
             margin: 1px; 
         }
 
         /* Red dots for 1 and 4 */
-        /* This applies to ALL visible dots when data-value is 1 or 4 */
         .dice-button[data-value="1"] .dot,
         .dice-button[data-value="4"] .dot {
             background-color: red;
         }
-
         /* Custom Dice Patterns based on the provided image */
-        /*
-            Grid cells logical mapping (1-indexed nth-child):
-            1 2 3
-            4 5 6
-            7 8 9
-        */
-
-        /* Value 1 (red): Center dot (cell 5) */
         .dice-button[data-value="1"] .dot:nth-child(5) { display: block; }
-
-        /* Value 2 (black): Top-left (cell 1) and Bottom-right (cell 9) */
-        .dice-button[data-value="2"] .dot:nth-child(1),
-        .dice-button[data-value="2"] .dot:nth-child(9) { display: block; }
-
-        /* Value 3 (black): Top-left (cell 1), Center (cell 5), Bottom-right (cell 9) */
-        .dice-button[data-value="3"] .dot:nth-child(1),
-        .dice-button[data-value="3"] .dot:nth-child(5),
-        .dice-button[data-value="3"] .dot:nth-child(9) { display: block; }
-
-        /* Value 4 (red): Top-left (cell 1), Top-right (cell 3), Bottom-left (cell 7), Bottom-right (cell 9) */
-        .dice-button[data-value="4"] .dot:nth-child(1),
-        .dice-button[data-value="4"] .dot:nth-child(3),
-        .dice-button[data-value="4"] .dot:nth-child(7),
-        .dice-button[data-value="4"] .dot:nth-child(9) { display: block; }
-
-        /* Value 5 (black): All four corners (cells 1, 3, 7, 9) + Center (cell 5) */
-        .dice-button[data-value="5"] .dot:nth-child(1),
-        .dice-button[data-value="5"] .dot:nth-child(3),
-        .dice-button[data-value="5"] .dot:nth-child(5),
-        .dice-button[data-value="5"] .dot:nth-child(7),
-        .dice-button[data-value="5"] .dot:nth-child(9) { display: block; }
-
-        /* Value 6 (black): All six side dots (cells 1, 3, 4, 6, 7, 9) */
-        /* This matches the image's 6-dot pattern (top-left, top-right, middle-left, middle-right, bottom-left, bottom-right) */
-        .dice-button[data-value="6"] .dot:nth-child(1),
-        .dice-button[data-value="6"] .dot:nth-child(3),
-        .dice-button[data-value="6"] .dot:nth-child(4),
-        .dice-button[data-value="6"] .dot:nth-child(6),
-        .dice-button[data-value="6"] .dot:nth-child(7),
-        .dice-button[data-value="6"] .dot:nth-child(9) { display: block; }
+        .dice-button[data-value="2"] .dot:nth-child(1), .dice-button[data-value="2"] .dot:nth-child(9) { display: block; }
+        .dice-button[data-value="3"] .dot:nth-child(1), .dice-button[data-value="3"] .dot:nth-child(5), .dice-button[data-value="3"] .dot:nth-child(9) { display: block; }
+        .dice-button[data-value="4"] .dot:nth-child(1), .dice-button[data-value="4"] .dot:nth-child(3), .dice-button[data-value="4"] .dot:nth-child(7), .dice-button[data-value="4"] .dot:nth-child(9) { display: block; }
+        .dice-button[data-value="5"] .dot:nth-child(1), .dice-button[data-value="5"] .dot:nth-child(3), .dice-button[data-value="5"] .dot:nth-child(5), .dice-button[data-value="5"] .dot:nth-child(7), .dice-button[data-value="5"] .dot:nth-child(9) { display: block; }
+        .dice-button[data-value="6"] .dot:nth-child(1), .dice-button[data-value="6"] .dot:nth-child(3), .dice-button[data-value="6"] .dot:nth-child(4), .dice-button[data-value="6"] .dot:nth-child(6), .dice-button[data-value="6"] .dot:nth-child(7), .dice-button[data-value="6"] .dot:nth-child(9) { display: block; }
         
         @keyframes diceRoll {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
         .last-roll-info {
-            font-size: 1em;
+            font-size: 0.9em; /* 縮小最後擲骰資訊字體大小 */
             color: #666;
-            min-height: 1.2em;
+            min-height: 1.1em; /* 保持最小高度 */
+            margin-bottom: 5px; /* 縮小下邊距 */
         }
         
         .message, .win-message {
-            margin-top: 15px;
+            margin-top: 5px;
             font-weight: bold;
+            font-size: 0.95em; /* 縮小訊息字體大小 */
         }
         .message {
-            font-size: 1em;
             color: #FF5722;
         }
         .win-message {
             color: var(--primary-color);
-            font-size: 1.5em;
+            font-size: 1.2em; /* 縮小勝利訊息字體大小 */
         }
         .reset-button {
             background-color: var(--warning-color);
             color: var(--text-color);
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1em;
+            margin-top: 10px; /* 縮小重置按鈕上邊距 */
+            padding: 8px 15px; /* 縮小按鈕內邊距 */
+            font-size: 0.95em; /* 縮小按鈕字體大小 */
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -283,23 +213,14 @@
         }
 
         /* Game Board Styles */
-        .game-board-container {
-            background-color: var(--white-bg);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
         #gameBoard {
             border-collapse: collapse;
             width: 100%;
-            max-width: 450px;
-            aspect-ratio: 1 / 1;
+            max-width: 350px; /* 限制棋盤最大寬度，在手機上可以佔滿，在大螢幕上不會過大 */
+            aspect-ratio: 1 / 1; /* 保持正方形 */
             border: 2px solid var(--border-color);
             table-layout: fixed;
+            margin-top: 10px; /* 給棋盤上方留點間距 */
         }
         #gameBoard td {
             width: 10%;
@@ -307,7 +228,7 @@
             border: 1px solid var(--border-color);
             text-align: center;
             vertical-align: middle;
-            font-size: 0.9em;
+            font-size: 0.8em; /* 縮小棋盤格數字字體大小 */
             font-weight: bold;
             color: #666;
             background-color: #fdfdfd;
@@ -338,50 +259,80 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.8em;
+            font-size: 1.5em; /* 縮小蛇圖標大小 */
             z-index: 1;
         }
         #gameBoard td.current-position span {
             display: none;
         }
 
-        /* Responsive Adjustments */
+        /* Responsive Adjustments (為桌面/平板恢復原始雙欄佈局和較大空間) */
         @media (min-width: 768px) {
             body {
                 justify-content: center;
                 padding: 40px 20px;
+                line-height: 1.5; /* 桌面端行間距恢復 */
             }
             .game-wrapper {
-                flex-direction: row;
+                flex-direction: row; /* 桌面端變為左右並排 */
                 align-items: flex-start;
                 max-width: 900px;
+                gap: 20px; /* 桌面端恢復間距 */
             }
-            .game-info-container {
-                flex: 1;
-                padding: 40px;
+            .game-info-and-board-container { /* 整合容器變為左右兩欄的容器 */
+                flex-direction: row; /* 桌面端讓內容左右並排 */
+                justify-content: space-between; /* 內容左右分開 */
+                align-items: flex-start; /* 頂部對齊 */
+                padding: 25px 20px; /* 桌面端恢復內邊距 */
+                gap: 20px; /* 內部元素間距 */
             }
-            .game-board-container {
-                flex: 1;
-                padding: 20px;
+
+            /* 確保 info 內容區塊在 desktop 上仍然是 column */
+            .game-info-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                flex: 1; /* 讓信息區塊佔據一半寬度 */
+                min-width: 300px; /* 確保最小寬度 */
             }
-            .game-settings-container {
-                flex: 1;
+            
+            #gameBoard {
+                flex: 1; /* 讓遊戲板佔據另一半寬度 */
+                max-width: 450px; /* 恢復原始桌面寬度 */
+                margin-top: 0; /* 桌面端不需要頂部間距 */
+            }
+
+            .game-settings-container { /* 設定區塊保持獨立在右側 */
+                flex: none; /* 讓它不佔據彈性空間 */
+                width: 350px; /* 給設定區塊一個固定寬度，或根據需要調整 */
                 margin-bottom: 0;
+                padding: 25px 20px; /* 桌面端恢復內邊距 */
             }
-            .settings-grid {
-                grid-template-columns: 1fr 1fr;
-            }
+
             h1 {
                 font-size: 2.5em;
+                margin-bottom: 15px;
+            }
+            h2 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
             }
             .instructions {
-                font-size: 1.1em;
+                font-size: 1em; /* 桌面尺寸的說明文字恢復到較大 */
+                margin-bottom: 15px; /* 桌面尺寸的說明文字恢復下邊距 */
+                line-height: 1.5; /* 桌面尺寸的說明文字恢復行高 */
+                padding: 0; /* 桌面尺寸的說明文字移除內邊距 */
+                text-align: left; /* 桌面端可以靠左對齊 */
+            }
+            .game-stats {
+                margin-bottom: 20px;
+                gap: 10px;
             }
             .stat-item {
-                font-size: 1.5em;
+                font-size: 1.4em;
             }
             .stat-item span {
-                font-size: 1.8em;
+                font-size: 1.7em;
             }
             .dice-button {
                 width: 80px;
@@ -392,46 +343,96 @@
                 height: 18px;
             }
             .last-roll-info {
-                font-size: 1.2em;
+                font-size: 1.1em;
+                margin-bottom: 10px;
             }
-            .win-message {
-                font-size: 1.8em;
-            }
-            #gameBoard td {
+            .message {
                 font-size: 1em;
             }
+            .win-message {
+                font-size: 1.5em;
+            }
+            .reset-button {
+                margin-top: 15px;
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            #gameBoard td {
+                font-size: 0.9em;
+            }
             #gameBoard td.current-position::before {
-                font-size: 2.2em;
+                font-size: 2em;
+            }
+        }
+
+        /* 考慮更小的手機螢幕 */
+        @media (max-width: 400px) {
+            h1 {
+                font-size: 1.6em; /* 小手機再稍微縮小主標題 */
+            }
+            h2 {
+                font-size: 1.2em; /* 小手機再稍微縮小次標題 */
+            }
+            .instructions {
+                font-size: 0.75em; /* 小手機再稍微縮小說明文字 */
+            }
+            .stat-item {
+                font-size: 1em; /* 小手機再稍微縮小統計項目 */
+            }
+            .stat-item span {
+                font-size: 1.3em; /* 小手機再稍微縮小統計數值 */
+            }
+            .dice-button {
+                width: 60px; /* 小手機骰子略微縮小 */
+                height: 60px;
+            }
+            .dot {
+                width: 14px; /* 小手機點略微縮小 */
+                height: 14px;
+            }
+            #gameBoard td {
+                font-size: 0.7em; /* 小手機棋盤格數字略微縮小 */
+            }
+            #gameBoard td.current-position::before {
+                font-size: 1.4em; /* 小手機蛇圖標略微縮小 */
+            }
+            .start-game-button, .reset-button {
+                padding: 6px 12px; /* 小手機按鈕內邊距 */
+                font-size: 0.9em;
             }
         }
     </style>
 </head>
 <body>
     <div class="game-wrapper">
-        <div class="game-info-container" id="gameInfoSection" style="display: none;">
-            <h1>加法蛇遊戲 🐍</h1>
-            <p class="instructions">玩家輪流擲骰子 (1-6)。目標是讓總和達到或超過 <span id="displayWinningSum"></span>。加到或超過目標數字的人獲勝！</p>
-            
-            <div class="game-stats">
-                <div class="stat-item current-sum">目前總和: <span class="stat-value" id="currentSum">0</span></div>
-                <div class="stat-item player-turn">目前輪到: <span class="stat-value" id="playerTurn">玩家 1</span></div>
-            </div>
-            
-            <div class="dice-area">
-                <div class="dice-button" id="diceButton" onclick="makeMove()">
-                    <div class="dice-dots">
-                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                    </div>
+        <div class="game-info-and-board-container" id="gameInfoAndBoardSection" style="display: none;">
+            <div class="game-info-content"> 
+                <h1>加法蛇遊戲 🐍</h1>
+                <p class="instructions">擲骰達目標總和 <span id="displayWinningSum"></span> 者獲勝！</p>
+                
+                <div class="game-stats">
+                    <div class="stat-item current-sum">目前總和: <span class="stat-value" id="currentSum">0</span></div>
+                    <div class="stat-item player-turn">目前輪到: <span class="stat-value" id="playerTurn">玩家 1</span></div>
                 </div>
-                <p class="last-roll-info" id="lastRollInfo">點擊骰子開始遊戲！</p>
-            </div>
-            
-            <p class="message" id="gameMessage"></p>
-            <p class="win-message" id="winMessage"></p>
+                
+                <div class="dice-area">
+                    <div class="dice-button" id="diceButton" onclick="makeMove()">
+                        <div class="dice-dots">
+                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                        </div>
+                    </div>
+                    <p class="last-roll-info" id="lastRollInfo">點擊骰子開始遊戲！</p>
+                </div>
+                
+                <p class="message" id="gameMessage"></p>
+                <p class="win-message" id="winMessage"></p>
 
-            <button class="reset-button" onclick="resetGame()" style="display: none;">重新開始</button>
+                <button class="reset-button" onclick="resetGame()" style="display: none;">重新開始</button>
+            </div>
+
+            <table id="gameBoard"></table>
         </div>
 
         <div class="game-settings-container" id="gameSettingsSection">
@@ -447,10 +448,6 @@
                 </div>
             </div>
             <button class="start-game-button" onclick="startGame()">開始遊戲</button>
-        </div>
-
-        <div class="game-board-container" id="gameBoardSection" style="display: none;">
-            <table id="gameBoard"></table>
         </div>
     </div>
 
@@ -476,8 +473,9 @@
         const numPlayersInput = document.getElementById('numPlayersInput');
         const startGameButton = document.querySelector('.start-game-button');
         const gameSettingsSection = document.getElementById('gameSettingsSection');
-        const gameInfoSection = document.getElementById('gameInfoSection');
-        const gameBoardSection = document.getElementById('gameBoardSection');
+        // const gameInfoSection = document.getElementById('gameInfoSection'); // Removed, now part of integrated container
+        // const gameBoardSection = document.getElementById('gameBoardSection'); // Removed, now part of integrated container
+        const gameInfoAndBoardSection = document.getElementById('gameInfoAndBoardSection'); // New integrated container
 
         // --- Game Board Initialization ---
         function createGameBoard() {
@@ -536,12 +534,10 @@
 
         // --- Dice Animation & Face Setting ---
         function setDiceFace(value) {
-            // Remove previous data-value to clear all dots, then set new value
-            diceButton.removeAttribute('data-value'); // Clears all current dot displays and colors
-            // Use a small timeout to ensure DOM update and re-render for color reset
+            diceButton.removeAttribute('data-value');
             setTimeout(() => {
                 diceButton.setAttribute('data-value', value);
-            }, 10); // A very small delay, usually enough for re-render
+            }, 10);
         }
 
         function rollDiceAnimation(callback) {
@@ -551,7 +547,7 @@
             let rollCount = 0;
             const animationInterval = setInterval(() => {
                 const tempRoll = Math.floor(Math.random() * 6) + 1;
-                setDiceFace(tempRoll); // Set temporary face for animation
+                setDiceFace(tempRoll);
                 rollCount++;
                 if (rollCount > 10) { 
                     clearInterval(animationInterval);
@@ -571,12 +567,11 @@
             resetButton.style.display = 'none';
             diceButton.style.display = 'flex'; 
             diceButton.onclick = makeMove;
-            setDiceFace(1); // Set initial dice face to 1
-            displayWinningSum.textContent = winningSum; // Update winning sum display in instructions
+            setDiceFace(1);
+            displayWinningSum.textContent = winningSum;
         }
 
         function makeMove() {
-            // Prevent multiple clicks during animation
             diceButton.onclick = null; 
             rollDiceAnimation(() => {
                 const roll = Math.floor(Math.random() * 6) + 1;
@@ -585,7 +580,7 @@
                 currentSum += roll;
                 currentSumDisplay.textContent = currentSum;
 
-                setDiceFace(roll); // Set final face after roll
+                setDiceFace(roll);
                 
                 updateSnakePosition(); 
 
@@ -594,9 +589,9 @@
                     diceButton.style.display = 'none';
                     resetButton.style.display = 'block';
                 } else {
-                    playerTurn = (playerTurn % numPlayers) + 1; // Cycle through players
+                    playerTurn = (playerTurn % numPlayers) + 1;
                     playerTurnDisplay.textContent = `玩家 ${playerTurn}`;
-                    diceButton.onclick = makeMove; // Re-enable click for next turn
+                    diceButton.onclick = makeMove;
                 }
             });
         }
@@ -606,11 +601,8 @@
             playerTurn = 1;
             updateGameDisplay();
             updateSnakePosition(); 
-            // Show settings again
             gameSettingsSection.style.display = 'block';
-            gameInfoSection.style.display = 'none';
-            gameBoardSection.style.display = 'none';
-            // Enable settings inputs
+            gameInfoAndBoardSection.style.display = 'none'; // 隱藏整合區塊
             winningSumInput.disabled = false;
             numPlayersInput.disabled = false;
             startGameButton.disabled = false;
@@ -631,30 +623,25 @@
 
             winningSum = enteredWinningSum;
             numPlayers = enteredNumPlayers;
-            currentSum = 0; // Reset sum for new game
-            playerTurn = 1; // Player 1 always starts
+            currentSum = 0;
+            playerTurn = 1;
 
-            // Hide settings, show game
             gameSettingsSection.style.display = 'none';
-            gameInfoSection.style.display = 'block';
-            gameBoardSection.style.display = 'flex'; // Ensure flex for board container
+            gameInfoAndBoardSection.style.display = 'flex'; // 顯示整合區塊 (flex)
 
-            // Disable settings inputs after starting game
             winningSumInput.disabled = true;
             numPlayersInput.disabled = true;
             startGameButton.disabled = true;
 
-            createGameBoard(); // Recreate board based on new winningSum
+            createGameBoard();
             updateGameDisplay();
-            updateSnakePosition(); // Place snake at 0
+            updateSnakePosition();
         }
 
         // Initial state: show settings, hide game
-        gameInfoSection.style.display = 'none';
-        gameBoardSection.style.display = 'none';
+        gameInfoAndBoardSection.style.display = 'none'; // 預設隱藏整合區塊
         gameSettingsSection.style.display = 'block';
         
-        // Set initial dice face to 1 when page loads (before game starts)
         setDiceFace(1); 
     </script>
 </body>
