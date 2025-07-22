@@ -13,18 +13,29 @@
             padding: 0; 
             /* 針對 iOS Safari 的字體調整，防止自動放大 */
             -webkit-text-size-adjust: none; 
+            -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
         }
 
+        /* --- Dark Theme Color Variables --- */
         :root {
-            --primary-color: #4CAF50; /* Green */
-            --secondary-color: #2196F3; /* Blue */
-            --accent-color: #E91E63; /* Pink */
-            --warning-color: #FFC107; /* Amber */
-            --text-color: #333;
-            --light-bg: #f0f2f5;
-            --white-bg: #fff;
-            --border-color: #eee;
-            --shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            --primary-color: #8BC34A;   /* 亮綠色，作為主要操作色或強調色 */
+            --secondary-color: #64B5F6; /* 亮藍色，作為次要強調色或訊息色 */
+            --accent-color: #FF8A65;    /* 亮橘色/珊瑚色，作為警示或高亮 */
+            --warning-color: #FFD54F;   /* 亮黃色，警告色 */
+            
+            --dark-bg-1: #212121;       /* 最暗的背景色，用於body */
+            --dark-bg-2: #2E2E2E;       /* 次暗的背景色，用於卡片或主要容器 */
+            --dark-bg-3: #3A3A3A;       /* 稍亮的背景色，用於輸入框或次要元素 */
+            
+            --text-color-light: #E0E0E0; /* 淺色文字，用於主要內容 */
+            --text-color-medium: #B0B0B0; /* 中等淺色文字，用於次要內容 */
+            --text-color-dark: #757575; /* 暗色文字，用於說明性文字或背景上的點綴 */
+            
+            --border-color-dark: #424242; /* 暗色邊框 */
+            --shadow-dark: 0 4px 15px rgba(0, 0, 0, 0.4); /* 暗色主題下的陰影，更深更明顯 */
+            --shadow-hover-dark: 0 6px 20px rgba(0, 0, 0, 0.6);
+
+            --white-bg: #FFFFFF; /* 新增一個白色變數給骰子背景 */
         }
 
         body {
@@ -34,127 +45,154 @@
             justify-content: flex-start;
             align-items: center;
             min-height: 100vh;
-            background-color: var(--light-bg);
-            padding: 5px; 
-            color: var(--text-color);
-            line-height: 1.15;
+            background-color: var(--dark-bg-1); /* 深灰色背景 */
+            padding: 8px; /* 統一外部 padding，美化邊緣 */
+            color: var(--text-color-light); /* 淺色文字 */
+            line-height: 1.4; /* 增加 Body 的預設行高，讓所有文字更舒展 */
         }
 
         .game-wrapper {
             display: flex;
             flex-direction: column;
             width: 100%;
-            max-width: 900px;
+            max-width: 400px; /* 手機版最大寬度略為縮小，使內容更集中 */
+            margin-top: 10px; /* 將遊戲內容稍微下移，避免緊貼頂部 */
+            gap: 12px; /* 增加主區塊之間的間距 */
         }
 
         .game-info-and-board-container { 
-            background-color: var(--white-bg);
-            padding: 8px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
+            background-color: var(--dark-bg-2); /* 次暗的背景色 */
+            padding: 12px; /* 增加內邊距，提供更多呼吸空間 */
+            border-radius: 16px; /* 圓角更大，更現代 */
+            box-shadow: var(--shadow-dark); /* 暗色陰影 */
             display: flex;
             flex-direction: column; 
-            align-items: center;
+            align-items: center; 
+            position: relative; /* 用於可能的絕對定位元素 */
         }
         
         .game-info-content {
             display: flex;
             flex-direction: column;
             align-items: center; 
-            width: 100%;
+            width: 100%; 
         }
 
-        /* 修復：使用更精確的間距控制 */
+        /* 統一控制 .game-info-content 內部元素的間距 */
         .game-info-content > *:not(:last-child) {
-            margin-bottom: 4px;
+            margin-bottom: 8px; /* 增加統一的間距 */
         }
+        /* 針對特定元素的間距微調，覆蓋通用規則 */
+        h1 { margin-bottom: 10px !important; } /* 標題下方多一點間距 */
+        .instructions { margin-bottom: 15px !important; } /* 說明下方多一點間距 */
+        .stats-and-dice-row { margin-bottom: 15px !important; } /* 統計骰子行下方多一點間距 */
+        .message.active, .win-message.active { margin-bottom: 10px !important; } /* 訊息顯示時下方有間距 */
 
-        /* 修復：移除可能導致額外空間的 margin-top */
+
         #gameBoard {
-            margin-top: 4px !important;
+            margin-top: 15px; /* 棋盤與上方內容的間距增加 */
             border-collapse: collapse;
             width: 100%;
-            max-width: 350px;
-            border: 2px solid var(--border-color);
+            max-width: 350px; 
+            aspect-ratio: 1 / 1; /* 保持正方形 */
+            border: 2px solid var(--border-color-dark); /* 暗色邊框 */
             table-layout: fixed;
+            border-radius: 8px; /* 棋盤也加上圓角 */
+            overflow: hidden; /* 確保圓角生效 */
         }
 
         .game-settings-container { 
-            background-color: var(--white-bg);
-            padding: 10px 15px; 
-            border-radius: 12px;
-            box-shadow: var(--shadow);
+            background-color: var(--dark-bg-2); /* 次暗的背景色 */
+            padding: 20px 25px; /* 設置區塊內邊距再次增加，讓內容更舒適 */
+            border-radius: 16px; /* 圓角更大 */
+            box-shadow: var(--shadow-dark); /* 暗色陰影 */
             flex-shrink: 0;
             text-align: center;
-            margin-top: 6px;
+            margin-top: 15px; /* 設定區塊與遊戲區塊間的間距增加 */
         }
-
-        /* 修復：設置區塊內部元素的間距 */
-        .game-settings-container h2 { 
-            margin-bottom: 8px; 
-        }
-        
+        /* 設置區塊內部元素的間距 */
+        .game-settings-container h2 { margin-bottom: 15px; } /* 標題下方間距增加 */
         .game-settings-container .settings-grid { 
-            margin-bottom: 8px; 
+            margin-bottom: 20px; /* 輸入框組下方間距增加 */
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px; /* 每個設定項之間的間距增加 */
         }
 
         .setting-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            padding: 5px 0; /* 讓設定項看起來更舒展 */
         }
 
         .setting-item label {
-            font-size: 0.9em;
-            color: var(--text-color);
+            font-size: 0.95em; /* 字體微調 */
+            color: var(--text-color-light); /* 淺色文字 */
+            font-weight: 500; /* 更明顯 */
         }
 
         .setting-item input {
-            padding: 4px 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
+            padding: 6px 10px; /* 輸入框內邊距 */
+            border: 1px solid var(--border-color-dark); /* 暗色邊框 */
+            background-color: var(--dark-bg-3); /* 稍亮的背景色 */
+            color: var(--text-color-light); /* 淺色文字 */
+            border-radius: 8px; /* 圓角更大 */
             font-size: 0.9em;
-            width: 60px;
+            width: 70px; /* 寬度稍微放寬 */
+            text-align: center; /* 數字居中 */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .setting-item input:focus {
+            outline: none;
+            border-color: var(--secondary-color); /* 聚焦時亮藍色邊框 */
+            box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.3); /* 亮藍色陰影 */
         }
 
         .start-game-button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 8px 16px;
+            background-color: var(--primary-color); /* 亮綠色按鈕 */
+            color: var(--dark-bg-1); /* 暗色文字在按鈕上 */
+            padding: 10px 20px; /* 按鈕更大更易點擊 */
             border: none;
-            border-radius: 6px;
+            border-radius: 8px; /* 圓角更大 */
             cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s ease;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow-dark);
         }
 
         .start-game-button:hover {
-            background-color: #45a049;
+            background-color: #7CB342; /* 懸停時稍微深一點的綠 */
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover-dark);
+        }
+        .start-game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         h1 {
-            color: var(--primary-color);
-            font-size: 1.6em; 
+            color: var(--primary-color); /* 亮綠色標題 */
+            font-size: 1.8em; /* 標題略大 */
             text-align: center; 
             width: 100%; 
-            line-height: 1.1;
+            line-height: 1.2; /* 標題行高增加 */
+            font-weight: 700;
         }
 
         h2 {
-            color: var(--secondary-color);
-            font-size: 1.2em; 
-            line-height: 1.1; 
+            color: var(--secondary-color); /* 亮藍色副標題 */
+            font-size: 1.3em; /* 副標題略大 */
+            line-height: 1.2; /* 副標題行高增加 */
+            font-weight: 600;
         }
 
         .instructions {
-            font-size: 0.7em; 
-            line-height: 1.15; 
-            color: #555;
-            padding: 0 2px; 
+            font-size: 0.8em; /* 說明文字略大，更易讀 */
+            line-height: 1.5; /* 說明文字行間距明顯增加，提供最佳可讀性 */
+            color: var(--text-color-medium); /* 中等淺色文字 */
+            padding: 0 5px; /* 左右內邊距 */
             text-align: center;
         }
 
@@ -163,364 +201,289 @@
             justify-content: space-between; 
             align-items: center; 
             width: 100%;
-            padding: 0 5px; 
-            line-height: 1.1;
+            padding: 0 8px; /* 左右內邊距 */
+            line-height: 1.2; /* 行高增加 */
         }
 
         .game-stats {
             display: flex;
             flex-direction: column; 
             align-items: flex-start; 
-            gap: 1px;
-            min-width: 90px; 
+            gap: 4px; /* 統計項目間距增加 */
+            min-width: 95px; /* 稍微增加最小寬度 */
             flex-shrink: 0; 
         }
 
         .stat-item {
-            font-size: 0.95em; 
+            font-size: 1em; /* 統計字體 */
             font-weight: bold;
             display: flex; 
             align-items: baseline; 
-            gap: 3px; 
-            line-height: 1.1; 
+            gap: 5px; /* 值與標籤間距增加 */
+            line-height: 1.2; /* 行高增加 */
+            color: var(--text-color-light); /* 淺色文字 */
         }
-
         .stat-item .stat-value {
-            font-size: 1.2em; 
+            font-size: 1.3em; /* 數值字體略大 */
         }
-
         .current-sum .stat-value {
-            color: var(--accent-color);
+            color: var(--accent-color); /* 亮橘色/珊瑚色 */
         }
-
         .player-turn .stat-value {
-            color: var(--secondary-color);
+            color: var(--secondary-color); /* 亮藍色 */
         }
 
         .dice-area {
             display: flex;
             flex-direction: row; 
             align-items: center; 
-            gap: 3px; 
+            gap: 8px; /* 骰子與信息間距增加 */
             flex-shrink: 0; 
         }
-
         .dice-button {
-            width: 55px; 
-            height: 55px; 
-            background-color: var(--white-bg);
-            border: 2px solid var(--text-color); 
-            border-radius: 10px; 
+            width: 60px; /* 骰子尺寸略大 */
+            height: 60px; 
+            background-color: var(--white-bg); /* 白色背景 */
+            border: 3px solid var(--border-color-dark); /* 暗色邊框 */
+            border-radius: 12px; /* 圓角 */
             display: flex; 
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: transform 0.1s ease-out, background-color 0.3s;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1); 
+            transition: transform 0.1s ease-out, background-color 0.3s, box-shadow 0.3s;
+            box-shadow: var(--shadow-dark); 
             position: relative;
             overflow: hidden;
             flex-shrink: 0; 
         }
-
-        .dice-button.rolling {
-            animation: diceRoll 0.5s linear infinite;
-            pointer-events: none;
-            background-color: #ddd;
+        .dice-button:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover-dark);
         }
-
+        .dice-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .dice-button.rolling {
+            animation: diceRoll 0.5s linear infinite; /* 骰子按鈕本身的旋轉動畫 */
+            pointer-events: none;
+            background-color: #f0f0f0; /* 滾動時背景稍微變灰，但仍是淺色系 */
+            box-shadow: none;
+        }
         .dice-dots {
             width: 100%;
             height: 100%;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 6px; 
+            padding: 8px; /* 點點內邊距 */
             box-sizing: border-box;
             gap: 0;
         }
-
         .dot {
-            width: 12px; 
-            height: 12px; 
-            background-color: var(--text-color);
-            border-radius: 50%;
-            display: none;
+            width: 14px; /* 點點尺寸略大 */
+            height: 14px; 
+            background-color: var(--dark-bg-1); /* 預設黑色點數 */
+            border-radius: 50%; /* Make dots round */
+            display: none; /* Default hidden, controlled by JS */
             justify-self: center;
             align-self: center;
         }
 
-        /* Dice Patterns */
-        .dice-button[data-value="1"] .dot, .dice-button[data-value="4"] .dot { 
-            background-color: red; 
-        }
-
-        .dice-button[data-value="1"] .dot:nth-child(5) { 
-            display: block; 
-        }
-
-        .dice-button[data-value="2"] .dot:nth-child(1), 
-        .dice-button[data-value="2"] .dot:nth-child(9) { 
-            display: block; 
-        }
-
-        .dice-button[data-value="3"] .dot:nth-child(1), 
-        .dice-button[data-value="3"] .dot:nth-child(5), 
-        .dice-button[data-value="3"] .dot:nth-child(9) { 
-            display: block; 
-        }
-
-        .dice-button[data-value="4"] .dot:nth-child(1), 
-        .dice-button[data-value="4"] .dot:nth-child(3), 
-        .dice-button[data-value="4"] .dot:nth-child(7), 
-        .dice-button[data-value="4"] .dot:nth-child(9) { 
-            display: block; 
-        }
-
-        .dice-button[data-value="5"] .dot:nth-child(1), 
-        .dice-button[data-value="5"] .dot:nth-child(3), 
-        .dice-button[data-value="5"] .dot:nth-child(5), 
-        .dice-button[data-value="5"] .dot:nth-child(7), 
-        .dice-button[data-value="5"] .dot:nth-child(9) { 
-            display: block; 
-        }
-
-        .dice-button[data-value="6"] .dot:nth-child(1), 
-        .dice-button[data-value="6"] .dot:nth-child(3), 
-        .dice-button[data-value="6"] .dot:nth-child(4), 
-        .dice-button[data-value="6"] .dot:nth-child(6), 
-        .dice-button[data-value="6"] .dot:nth-child(7), 
-        .dice-button[data-value="6"] .dot:nth-child(9) { 
-            display: block; 
-        }
+        /* Red dots for 1 and 4 when NOT rolling */
+        /* This rule must be present and will apply when .dice-button does NOT have .rolling class */
+        .dice-button:not(.rolling)[data-value="1"] .dot,
+        .dice-button:not(.rolling)[data-value="4"] .dot { 
+            background-color: #EF5350; /* Red color */
+        } 
         
         @keyframes diceRoll {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
         .last-roll-info {
-            font-size: 0.75em; 
-            color: #666;
-            line-height: 1.1; 
+            font-size: 0.8em; /* 信息字體略大 */
+            color: var(--text-color-medium); /* 中等淺色文字 */
+            line-height: 1.3; /* 行高增加 */
             flex-grow: 1; 
             text-align: left; 
-            white-space: nowrap;
+            white-space: nowrap; 
+            overflow: hidden; /* 防止文字溢出 */
+            text-overflow: ellipsis; /* 文字溢出時顯示省略號 */
         }
         
         .message, .win-message {
             font-weight: bold;
-            font-size: 0.85em; 
+            font-size: 0.9em; /* 訊息字體略大 */
             text-align: center; 
-            line-height: 1.1; 
-            display: none;
-            /* 修復：確保訊息不會佔用額外空間 */
-            min-height: 0;
+            line-height: 1.3; /* 行高增加 */
+            display: none; 
+            min-height: 0; /* 確保不佔用空間 */
+            padding: 4px 0; /* 訊息內邊距增加 */
         }
-
         .message.active, .win-message.active {
-            display: block;
+            display: block; 
         }
-
         .message {
-            color: #FF5722;
+            color: #EF5350; /* 錯誤紅 */
         }
-
         .win-message {
-            color: var(--primary-color);
-            font-size: 1em; 
+            color: var(--primary-color); /* 亮綠色勝利訊息 */
+            font-size: 1.1em; /* 勝利訊息更大 */
+            padding: 8px 0; /* 勝利訊息內邊距增加 */
         }
-
         .reset-button {
-            background-color: var(--warning-color);
-            color: var(--text-color);
-            margin-top: 6px; 
-            padding: 6px 12px; 
-            font-size: 0.85em; 
+            background-color: var(--warning-color); /* 亮黃色按鈕 */
+            color: var(--dark-bg-1); /* 暗色文字在按鈕上 */
+            margin-top: 12px; /* 重設按鈕間距增加 */
+            padding: 8px 15px; 
+            font-size: 0.95em; 
             border: none;
-            border-radius: 6px; 
+            border-radius: 8px; /* 圓角 */
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         }
-
         .reset-button:hover {
-            background-color: #FFA000;
+            background-color: #FFC107; /* 懸停時稍微深一點的黃 */
+            transform: translateY(-1px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+        .reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
         }
 
-        /* Game Board Styles - 修復表格相關問題 */
+        /* Game Board Styles */
         #gameBoard td {
             width: 10%;
-            height: 10%;
-            border: 1px solid var(--border-color);
+            height: 35px; /* 手機版固定高度 */
+            min-height: 35px; /* 確保最小高度 */
+            max-height: 35px; /* 確保最大高度 */
+            border: 1px solid var(--border-color-dark); /* 暗色邊框 */
             text-align: center;
             vertical-align: middle;
-            font-size: 0.7em; 
+            font-size: 0.75em; /* 表格數字字體略大 */
             font-weight: bold;
-            color: #666;
-            background-color: #fdfdfd;
-            transition: background-color 0.3s ease;
+            color: var(--text-color-medium); /* 中等淺色文字 */
+            background-color: var(--dark-bg-3); /* 稍亮的背景色 */
+            transition: background-color 0.3s ease, transform 0.1s ease;
             position: relative;
-            /* 修復：確保表格單元格有固定高度 */
-            min-height: 25px;
-            line-height: 1;
+            line-height: 1.2; /* 表格數字行高稍微增加，避免數字擠壓 */
+        }
+        #gameBoard td:hover {
+            background-color: #424242; /* 懸停時顏色變深 */
         }
 
         #gameBoard td span {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            justify-content: center;
-            align-items: center;
-            padding: 1px; 
-            box-sizing: border-box;
-            /* 修復：確保span不會產生額外高度 */
-            min-height: 25px;
+             display: flex; /* 使用flexbox來確保內容居中 */
+             width: 100%;
+             height: 100%;
+             justify-content: center;
+             align-items: center;
+             padding: 0; /* 內部數字無 padding */
+             box-sizing: border-box;
+             line-height: inherit; /* 繼承父級行高 */
+             font-size: inherit; /* 繼承父級字體大小 */
         }
 
         /* Highlight current position (snake head) */
         #gameBoard td.current-position {
-            background-color: #dcedc8;
-            color: var(--text-color);
-            box-shadow: inset 0 0 4px rgba(0,0,0,0.1); 
+            background-color: #78909C;
+            color: var(--dark-bg-1); / 蛇頭上的文字為深色 /
+            box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
         }
-
         #gameBoard td.current-position::before {
             content: '🐍';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 1.3em; 
+            font-size: 1.5em; /* 蛇頭更大 */
             z-index: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
-
         #gameBoard td.current-position span {
             display: none;
         }
 
-        /* 修復：針對iOS Safari的特殊處理 */
-        @supports (-webkit-touch-callout: none) {
+        /* 針對 iOS Safari 的特殊處理 - 使用 @supports */
+        @supports (-webkit-overflow-scrolling: touch) { /* 更準確的判斷 iOS 環境 */
             body {
-                -webkit-text-size-adjust: 100%;
+                -webkit-text-size-adjust: 100%; /* 讓它在 iOS 上預設為 100% */
             }
             
             #gameBoard {
-                /* 強制表格寬度和高度 */
-                width: 100% !important;
+                /* 嘗試為整個棋盤設定固定的尺寸 */
+                width: calc(100% - 24px) !important; /* 減去左右 body padding + 容器 padding */
                 max-width: 350px !important;
-                height: 350px !important;
+                height: 350px !important; /* 強制棋盤固定高度，避免根據內容變動 */
             }
             
             #gameBoard td {
-                /* iOS Safari 表格單元格修復 */
+                /* iOS Safari 表格單元格強制固定高度 */
                 height: 35px !important;
                 min-height: 35px !important;
                 max-height: 35px !important;
+            }
+
+            /* 針對 input 元素在 iOS 上的預設樣式 */
+            input[type="number"] {
+                -webkit-appearance: none; /* 移除 iOS 數字輸入框的預設樣式 */
+                -moz-appearance: textfield; /* Firefox 兼容 */
+                appearance: none;
             }
         }
 
         /* 桌面端調整 */
         @media (min-width: 768px) {
             body {
-                padding: 10px; 
-                line-height: 1.3; 
+                padding: 20px; /* 桌面版 padding */
+                line-height: 1.5; /* 桌面版行高進一步增加 */
             }
-
             .game-wrapper {
-                max-width: 600px; 
-                gap: 10px; 
+                max-width: 650px; /* 桌面版寬度 */
+                margin-top: 20px;
+                gap: 15px; /* 桌面版主區塊之間間距增加 */
             }
-
             .game-info-and-board-container { 
-                padding: 12px; 
+                padding: 20px; /* 桌面版內邊距增加 */
+                border-radius: 20px;
             }
-
-            .game-info-content > *:not(:last-child) {
-                margin-bottom: 6px;
-            }
-
-            #gameBoard {
-                margin-top: 8px !important;
-            }
-
             .game-settings-container {
-                margin-top: 10px;
+                padding: 25px 30px; /* 桌面版設定區塊內邊距增加 */
+                border-radius: 20px;
+                margin-top: 20px;
             }
 
-            h1 { 
-                font-size: 2em; 
-                margin-bottom: 5px;
+            /* 桌面版元素間距 */
+            .game-info-content > *:not(:last-child) {
+                margin-bottom: 10px; /* 增加統一的間距 */
             }
+            h1 { font-size: 2.2em; margin-bottom: 12px !important; }
+            .instructions { font-size: 0.95em; line-height: 1.6; margin-bottom: 20px !important; } /* 桌面版說明行高和間距增加 */
+            .stats-and-dice-row { padding: 0 15px; margin-bottom: 20px !important; }
+            #gameBoard { margin-top: 20px; max-width: 450px; height: 450px !important;} /* 桌面版棋盤尺寸 */
+            #gameBoard td { height: 45px !important; min-height: 45px !important; max-height: 45px !important;} /* 桌面版單元格高度 */
+            #gameBoard td.current-position::before { font-size: 1.8em; }
 
-            h2 { 
-                font-size: 1.5em; 
-                margin-bottom: 8px;
-            }
 
-            .instructions { 
-                font-size: 0.85em; 
-                line-height: 1.3; 
-                padding: 0 8px; 
-                margin-bottom: 8px;
-            }
+            .game-settings-container h2 { margin-bottom: 18px; } /* 桌面版標題下方間距增加 */
+            .game-settings-container .settings-grid { margin-bottom: 25px; gap: 15px; } /* 桌面版輸入框組下方和內部間距增加 */
+            .setting-item label { font-size: 1.05em; }
+            .setting-item input { padding: 8px 12px; width: 80px; font-size: 1em;}
+            .start-game-button { padding: 12px 25px; font-size: 1.1em; }
 
-            .stats-and-dice-row {
-                padding: 0 10px; 
-                margin-bottom: 8px;
-            }
-
-            .game-stats {
-                gap: 3px; 
-            }
-
-            .stat-item {
-                font-size: 1.05em;
-            }
-
-            .stat-item .stat-value {
-                font-size: 1.3em;
-            }
-
-            .dice-area {
-                gap: 5px; 
-            }
-
-            .dice-button {
-                width: 65px;
-                height: 65px;
-            }
-
-            .dot {
-                width: 15px;
-                height: 15px;
-            }
-
-            .last-roll-info {
-                font-size: 0.85em;
-            }
-
-            .message, .win-message { 
-                font-size: 0.95em; 
-            }
-
-            .win-message {
-                font-size: 1.1em;
-            }
-
-            .reset-button { 
-                margin-top: 8px; 
-                padding: 8px 15px; 
-                font-size: 0.95em; 
-            }
-
-            #gameBoard td { 
-                font-size: 0.75em; 
-                height: 40px !important;
-                min-height: 40px !important;
-            }
-
-            #gameBoard td.current-position::before { 
-                font-size: 1.4em; 
-            }
+            .game-stats { gap: 5px; min-width: 120px; }
+            .stat-item { font-size: 1.1em; gap: 6px; }
+            .stat-item .stat-value { font-size: 1.4em; }
+            .dice-area { gap: 10px; }
+            .dice-button { width: 70px; height: 70px; border-width: 4px;}
+            .dot { width: 16px; height: 16px; }
+            .last-roll-info { font-size: 0.95em; line-height: 1.4; } /* 桌面版行高增加 */
+            .message, .win-message { font-size: 1em; padding: 6px 0; line-height: 1.4;} /* 桌面版訊息行高和內邊距增加 */
+            .win-message { font-size: 1.2em; padding: 10px 0; }
+            .reset-button { margin-top: 15px; padding: 10px 18px; font-size: 1em; }
         }
     </style>
 </head>
@@ -587,20 +550,23 @@
         const winMessageDisplay = document.getElementById('winMessage');
         const resetButton = document.querySelector('.reset-button');
         const diceButton = document.getElementById('diceButton');
+        const diceDotsContainer = diceButton.querySelector('.dice-dots'); // Get the container for dots
+        const allDots = diceDotsContainer.querySelectorAll('.dot'); // Get all dot elements (now with class .dot)
         
         const gameBoard = document.getElementById('gameBoard');
         const displayWinningSum = document.getElementById('displayWinningSum');
 
         const winningSumInput = document.getElementById('winningSumInput');
         const numPlayersInput = document.getElementById('numPlayersInput');
-        const startGameButton = document.querySelector('.start-game-button');
+        const startGameButton = document.querySelector('button.start-game-button');
         const gameSettingsSection = document.getElementById('gameSettingsSection');
         const gameInfoAndBoardSection = document.getElementById('gameInfoAndBoardSection'); 
 
         // --- Helper function for message display ---
         function showMessage(element, text, isWin = false) {
             element.textContent = text;
-            element.classList.add('active');
+            element.classList.add('active'); // Add active class to display
+            // For win message, add specific class
             if (isWin) {
                 element.classList.add('win'); 
             } else {
@@ -610,7 +576,7 @@
 
         function hideMessage(element) {
             element.textContent = '';
-            element.classList.remove('active', 'win');
+            element.classList.remove('active', 'win'); // Remove active and win classes
         }
 
         function createGameBoard() {
@@ -667,12 +633,37 @@
             }
         }
 
+        // Modified setDiceFace function to DIRECTLY control dot visibility
+        // and let CSS handle the color based on the .rolling class and data-value.
         function setDiceFace(value) {
-            diceButton.removeAttribute('data-value');
-            setTimeout(() => {
-                diceButton.setAttribute('data-value', value);
-            }, 10);
+            // First, hide all dots
+            allDots.forEach(dot => {
+                dot.style.display = 'none';
+                // *** REMOVED: dot.style.backgroundColor = 'var(--dark-bg-1)'; ***
+                // Now, the color will be determined solely by CSS rules.
+                // During rolling, the .rolling class on diceButton will mean
+                // the red rule is ignored, and the default .dot color will apply.
+            });
+
+            // Set data-value. This is crucial for the CSS color rule for 1 and 4.
+            diceButton.setAttribute('data-value', value);
+
+            // Directly show the dots for the given value based on array index
+            // These indices correspond to the 9 dots in a 3x3 grid (0-8)
+            const dotIndices = {
+                1: [4], // Center
+                2: [0, 8], // Top-left, Bottom-right
+                3: [0, 4, 8], // Top-left, Center, Bottom-right
+                4: [0, 2, 6, 8], // Top-left, Top-right, Bottom-left, Bottom-right
+                5: [0, 2, 4, 6, 8], // Top-left, Top-right, Center, Bottom-left, Bottom-right
+                6: [0, 2, 3, 5, 6, 8] // Top-left, Top-right, Mid-left, Mid-right, Bottom-left, Bottom-right
+            };
+
+            dotIndices[value].forEach(index => {
+                allDots[index].style.display = 'block';
+            });
         }
+
 
         function rollDiceAnimation(callback) {
             diceButton.classList.add('rolling');
@@ -681,11 +672,13 @@
             let rollCount = 0;
             const animationInterval = setInterval(() => {
                 const tempRoll = Math.floor(Math.random() * 6) + 1;
-                setDiceFace(tempRoll);
+                setDiceFace(tempRoll); // This will show random dots, default color (black)
+                                       // because .rolling class is active
                 rollCount++;
                 if (rollCount > 10) { 
                     clearInterval(animationInterval);
-                    diceButton.classList.remove('rolling');
+                    diceButton.classList.remove('rolling'); // Remove rolling class
+                                                          // This will allow red color for 1/4 to apply
                     callback();
                 }
             }, 80); 
@@ -694,13 +687,13 @@
         function updateGameDisplay() {
             currentSumDisplay.textContent = currentSum;
             playerTurnDisplay.textContent = `玩家 ${playerTurn}`;
-            hideMessage(gameMessageDisplay);
-            hideMessage(winMessageDisplay);
+            hideMessage(gameMessageDisplay); // Hide message
+            hideMessage(winMessageDisplay); // Hide win message
             lastRollInfoDisplay.textContent = '點擊骰子'; 
             resetButton.style.display = 'none';
             diceButton.style.display = 'flex'; 
             diceButton.onclick = makeMove;
-            setDiceFace(1);
+            setDiceFace(1); // 遊戲開始時顯示 1 點 (會是紅色)
             displayWinningSum.textContent = winningSum; 
         }
 
@@ -713,7 +706,8 @@
                 currentSum += roll;
                 currentSumDisplay.textContent = currentSum;
 
-                setDiceFace(roll);
+                // After rolling, ensure the final face is set and its color rules apply
+                setDiceFace(roll); // Set the final face. Color will now be controlled by CSS.
                 
                 updateSnakePosition(); 
 
@@ -775,6 +769,7 @@
         gameInfoAndBoardSection.style.display = 'none'; 
         gameSettingsSection.style.display = 'block';
         
+        // Initial setup for the dice when the page loads
         setDiceFace(1); 
     </script>
 </body>
