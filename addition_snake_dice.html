@@ -47,10 +47,8 @@
             border-radius: 12px;
             box-shadow: var(--shadow);
             display: flex;
-            flex-direction: column; /* 強制在手機上垂直堆疊 */
+            flex-direction: column; /* 統一垂直堆疊 */
             align-items: center; /* 居中對齊內部元素 */
-            /* 移除 gap，讓內部元素根據各自的 margin 自動調整間距 */
-            /* gap: 10px; */ 
         }
 
         .game-settings-container { 
@@ -66,6 +64,8 @@
             color: var(--primary-color);
             margin-bottom: 5px; /* 縮小主標題下邊距 */
             font-size: 1.8em; 
+            text-align: center; /* **標題置中** */
+            width: 100%; /* 確保標題可以置中 */
         }
         h2 {
             color: var(--secondary-color);
@@ -83,26 +83,37 @@
             text-align: center;
         }
 
-        /* Game Stats */
+        /* 新增一個 Flex 容器來放置統計和骰子 */
+        .stats-and-dice-row {
+            display: flex;
+            justify-content: space-between; /* 統計靠左，骰子靠右 */
+            align-items: center; /* **垂直居中對齊（統計兩行文字與骰子）** */
+            width: 100%;
+            padding: 0 10px; /* 稍微內縮 */
+            margin-bottom: 12px; /* 縮短與下方內容的距離 */
+            box-sizing: border-box;
+        }
+
+        /* 遊戲統計區塊 */
         .game-stats {
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 12px; /* 縮小統計區塊下邊距 */
-            flex-wrap: wrap;
-            gap: 8px; 
-            width: 100%; 
+            flex-direction: column; /* 垂直堆疊統計項目 */
+            align-items: flex-start; /* 靠左對齊 */
+            gap: 3px; /* 縮小統計項目間距 */
+            margin-bottom: 0; /* 移除獨立的下邊距，由父容器控制 */
+            /* padding-right: 10px; */ /* 可以移除或保留，視需求而定，讓 flex 自動分配空間 */
         }
 
         .stat-item {
             font-size: 1.1em; 
             font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            display: flex; /* 讓 label 和 value 在一行 */
+            align-items: baseline; /* 基線對齊 */
+            gap: 5px; /* 數字與文字間距 */
         }
-        .stat-item span {
+        .stat-item .stat-value {
             font-size: 1.4em; 
-            margin-top: 2px; 
+            margin-top: 0; /* 移除獨立的 top margin */
         }
         .current-sum .stat-value {
             color: var(--accent-color);
@@ -111,13 +122,14 @@
             color: var(--secondary-color);
         }
 
-        /* Dice Styles */
+        /* 骰子區域 */
         .dice-area {
-            margin-top: 8px; /* 縮小骰子區域上邊距 */
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px; 
+            flex-direction: row; /* **骰子和文字在同一行** */
+            align-items: center; /* **垂直居中對齊骰子與其文字** */
+            gap: 5px; /* 骰子與文字間距 */
+            margin-top: 0; /* 移除獨立的 top margin */
+            /* padding-left: 10px; */ /* 可以移除或保留 */
         }
         .dice-button {
             width: 65px; 
@@ -133,6 +145,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             position: relative;
             overflow: hidden;
+            flex-shrink: 0; /* 防止骰子被縮小 */
         }
         .dice-button.rolling {
             animation: diceRoll 0.5s linear infinite;
@@ -178,16 +191,20 @@
             100% { transform: rotate(360deg); }
         }
         .last-roll-info {
-            font-size: 0.9em; 
+            font-size: 0.85em; 
             color: #666;
             min-height: 1.1em; 
-            margin-bottom: 5px; 
+            margin-bottom: 0; /* 移除下邊距，由父容器控制 */
+            flex-grow: 1; /* 允許文字填充剩餘空間 */
+            text-align: left; /* **骰子右邊的文字靠左對齊** */
         }
         
         .message, .win-message {
-            margin-top: 5px;
+            margin-top: 5px; 
+            margin-bottom: 5px; 
             font-weight: bold;
             font-size: 0.95em; 
+            text-align: center; 
         }
         .message {
             color: #FF5722;
@@ -215,11 +232,11 @@
         #gameBoard {
             border-collapse: collapse;
             width: 100%;
-            max-width: 350px; 
+            max-width: 350px; /* 限制棋盤最大寬度 */
             aspect-ratio: 1 / 1; 
             border: 2px solid var(--border-color);
             table-layout: fixed;
-            margin-top: 0; /* 移除表格上方的 margin，使其與上方內容緊密連接 */
+            margin-top: 10px; /* 棋盤與上方內容的距離 */
         }
         #gameBoard td {
             width: 10%;
@@ -265,138 +282,74 @@
             display: none;
         }
 
-        /* Responsive Adjustments (為桌面/平板恢復原始雙欄佈局和較大空間) */
+        /* 桌面端調整 - 保持統一垂直堆疊 */
         @media (min-width: 768px) {
             body {
-                justify-content: center;
-                padding: 40px 20px;
-                line-height: 1.5; 
+                justify-content: flex-start;
+                padding: 20px 10px;
+                line-height: 1.35;
             }
             .game-wrapper {
-                flex-direction: row; 
-                align-items: flex-start;
-                max-width: 900px;
-                gap: 20px; 
+                max-width: 700px;
+                gap: 15px;
             }
             .game-info-and-board-container { 
-                flex-direction: row; 
-                justify-content: space-between; 
-                align-items: flex-start; 
-                padding: 25px 20px; 
-                gap: 20px; 
+                padding: 15px;
             }
-
-            .game-info-content {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                flex: 1; 
-                min-width: 300px; 
-            }
-            
-            #gameBoard {
-                flex: 1; 
-                max-width: 450px; 
-                margin-top: 0; 
-            }
-
-            .game-settings-container { 
-                flex: none; 
-                width: 350px; 
-                margin-bottom: 0;
-                padding: 25px 20px; 
-            }
-
-            h1 {
-                font-size: 2.5em;
-                margin-bottom: 15px;
-            }
-            h2 {
-                font-size: 1.8em; 
-                margin-bottom: 15px;
-            }
-            .instructions {
-                font-size: 1em; 
-                margin-bottom: 15px; 
-                line-height: 1.5; 
-                padding: 0; 
-                text-align: left; 
+            .stats-and-dice-row {
+                padding: 0 20px; /* 桌面端可以稍微寬鬆一點 */
             }
             .game-stats {
-                margin-bottom: 20px;
-                gap: 10px;
+                gap: 5px; /* 桌面端統計項目間距 */
             }
             .stat-item {
-                font-size: 1.4em;
+                font-size: 1.2em;
             }
-            .stat-item span {
-                font-size: 1.7em;
-            }
-            .dice-button {
-                width: 80px;
-                height: 80px;
-            }
-            .dot {
-                width: 18px;
-                height: 18px;
-            }
-            .last-roll-info {
-                font-size: 1.1em;
-                margin-bottom: 10px;
-            }
-            .message {
-                font-size: 1em;
-            }
-            .win-message {
+            .stat-item .stat-value {
                 font-size: 1.5em;
             }
-            .reset-button {
-                margin-top: 15px;
-                padding: 10px 20px;
-                font-size: 1em;
-            }
-            #gameBoard td {
-                font-size: 0.9em;
-            }
-            #gameBoard td.current-position::before {
-                font-size: 2em;
-            }
-        }
-
-        /* 考慮更小的手機螢幕 */
-        @media (max-width: 400px) {
-            h1 {
-                font-size: 1.6em; 
-            }
-            h2 {
-                font-size: 1.2em; 
-            }
-            .instructions {
-                font-size: 0.75em; 
-            }
-            .stat-item {
-                font-size: 1em; 
-            }
-            .stat-item span {
-                font-size: 1.3em; 
+            .dice-area {
+                gap: 8px; /* 桌面端骰子與文字間距 */
             }
             .dice-button {
-                width: 60px; 
-                height: 60px;
+                width: 70px;
+                height: 70px;
             }
-            .dot {
-                width: 14px; 
-                height: 14px;
+            .last-roll-info {
+                font-size: 1em;
             }
-            #gameBoard td {
-                font-size: 0.7em; 
+            #gameBoard {
+                max-width: 400px; 
+                margin-top: 15px; 
             }
-            #gameBoard td.current-position::before {
-                font-size: 1.4em; 
+            h1 { font-size: 2.2em; margin-bottom: 10px; }
+            h2 { font-size: 1.6em; margin-bottom: 10px; }
+            .instructions { 
+                font-size: 0.9em; 
+                margin-bottom: 10px; 
+                line-height: 1.4; 
+                padding: 0 10px; 
             }
-            .start-game-button, .reset-button {
-                padding: 6px 12px; 
-                font-size: 0.9em;
+            .message, .win-message { font-size: 1em; }
+            .reset-button { margin-top: 12px; padding: 9px 18px; font-size: 1em; }
+            #gameBoard td { font-size: 0.85em; }
+            #gameBoard td.current-position::before { font-size: 1.7em; }
+        }
+
+        /* 更小的手機螢幕 */
+        @media (max-width: 400px) {
+            h1 { font-size: 1.6em; }
+            h2 { font-size: 1.2em; }
+            .instructions { font-size: 0.75em; }
+            .stat-item { font-size: 1em; }
+            .stat-item .stat-value { font-size: 1.3em; }
+            .dice-button { width: 60px; height: 60px; }
+            .dot { width: 14px; height: 14px; }
+            #gameBoard td { font-size: 0.7em; }
+            #gameBoard td.current-position::before { font-size: 1.4em; }
+            .start-game-button, .reset-button { padding: 6px 12px; font-size: 0.9em; }
+            .stats-and-dice-row {
+                padding: 0 5px; /* 更小的手機內邊距 */
             }
         }
     </style>
@@ -406,22 +359,24 @@
         <div class="game-info-and-board-container" id="gameInfoAndBoardSection" style="display: none;">
             <div class="game-info-content"> 
                 <h1>加法蛇遊戲 🐍</h1>
-                <p class="instructions">擲骰達目標總和 <span id="displayWinningSum"></span> 者獲勝！</p>
+                <p class="instructions">玩家輪流擲骰子 (1-6)。目標是讓總和達到或超過 <span id="displayWinningSum"></span>。加到或超過目標數字的人獲勝！</p>
                 
-                <div class="game-stats">
-                    <div class="stat-item current-sum">目前總和: <span class="stat-value" id="currentSum">0</span></div>
-                    <div class="stat-item player-turn">目前輪到: <span class="stat-value" id="playerTurn">玩家 1</span></div>
-                </div>
-                
-                <div class="dice-area">
-                    <div class="dice-button" id="diceButton" onclick="makeMove()">
-                        <div class="dice-dots">
-                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-                        </div>
+                <div class="stats-and-dice-row">
+                    <div class="game-stats">
+                        <div class="stat-item current-sum">目前總和: <span class="stat-value" id="currentSum">0</span></div>
+                        <div class="stat-item player-turn">目前輪到: <span class="stat-value" id="playerTurn">玩家 1</span></div>
                     </div>
-                    <p class="last-roll-info" id="lastRollInfo">點擊骰子開始遊戲！</p>
+                    
+                    <div class="dice-area">
+                        <div class="dice-button" id="diceButton" onclick="makeMove()">
+                            <div class="dice-dots">
+                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                            </div>
+                        </div>
+                        <p class="last-roll-info" id="lastRollInfo">點擊骰子</p>
+                    </div>
                 </div>
                 
                 <p class="message" id="gameMessage"></p>
@@ -471,7 +426,7 @@
         const numPlayersInput = document.getElementById('numPlayersInput');
         const startGameButton = document.querySelector('.start-game-button');
         const gameSettingsSection = document.getElementById('gameSettingsSection');
-        const gameInfoAndBoardSection = document.getElementById('gameInfoAndBoardSection'); // New integrated container
+        const gameInfoAndBoardSection = document.getElementById('gameInfoAndBoardSection'); 
 
         // --- Game Board Initialization ---
         function createGameBoard() {
@@ -559,19 +514,19 @@
             playerTurnDisplay.textContent = `玩家 ${playerTurn}`;
             gameMessageDisplay.textContent = '';
             winMessageDisplay.textContent = '';
-            lastRollInfoDisplay.textContent = '點擊骰子開始遊戲！';
+            lastRollInfoDisplay.textContent = '點擊骰子'; 
             resetButton.style.display = 'none';
             diceButton.style.display = 'flex'; 
             diceButton.onclick = makeMove;
             setDiceFace(1);
-            displayWinningSum.textContent = winningSum;
+            displayWinningSum.textContent = winningSum; // 更新說明文字中的目標總和
         }
 
         function makeMove() {
             diceButton.onclick = null; 
             rollDiceAnimation(() => {
                 const roll = Math.floor(Math.random() * 6) + 1;
-                lastRollInfoDisplay.textContent = `你擲出了 ${roll} 點！`;
+                lastRollInfoDisplay.textContent = `擲出 ${roll} 點`; 
 
                 currentSum += roll;
                 currentSumDisplay.textContent = currentSum;
