@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加法蛇遊戲 🐍 (依據圖片精確排版點數)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4CAF50; /* Green */
+            --secondary-color: #2196F3; /* Blue */
+            --accent-color: #E91E63; /* Pink */
+            --warning-color: #FFC107; /* Amber */
+            --text-color: #333;
+            --light-bg: #f0f2f5;
+            --white-bg: #fff;
+            --border-color: #eee;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--light-bg);
+            margin: 0;
+            padding: 20px 10px;
+            box-sizing: border-box;
+            color: var(--text-color);
+        }
+
+        .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .game-info-container, .game-settings-container {
+            background-color: var(--white-bg);
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        h2 {
+            color: var(--secondary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .instructions {
+            font-size: 0.95em;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        /* Settings specific styles */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .setting-item label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+        .setting-item input {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 1em;
+            width: 80px;
+            text-align: center;
+            -moz-appearance: textfield;
+        }
+        .setting-item input::-webkit-outer-spin-button,
+        .setting-item input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .start-game-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+        .start-game-button:hover {
+            background-color: #45a049;
+        }
+        .start-game-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Game Stats */
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-item {
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-item span {
+            font-size: 1.5em;
+            margin-top: 5px;
+        }
+        .current-sum .stat-value {
+            color: var(--accent-color);
+        }
+        .player-turn .stat-value {
+            color: var(--secondary-color);
+        }
+
+        /* Dice Styles */
+        .dice-area {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        .dice-button {
+            width: 70px;
+            height: 70px;
+            background-color: var(--white-bg);
+            border: 3px solid var(--text-color);
+            border-radius: 12px;
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s ease-out, background-color 0.3s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .dice-button.rolling {
+            animation: diceRoll 0.5s linear infinite;
+            pointer-events: none;
+            background-color: #ddd;
+        }
+        .dice-dots {
+            width: 100%; /* Take full width of parent */
+            height: 100%; /* Take full height of parent */
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+            grid-template-rows: repeat(3, 1fr);    /* 3 equal rows */
+            padding: 8px; /* Padding from the dice edge to the dots */
+            box-sizing: border-box;
+            gap: 0; /* No gap between grid cells themselves */
+        }
+        .dot {
+            width: 18px; /* Dot size */
+            height: 18px; /* Dot size */
+            background-color: var(--text-color); /* Default black */
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown by CSS based on data-value */
+            /* Ensure dots are perfectly centered within their grid cell */
+            justify-self: center;
+            align-self: center;
+            /* Optional: Add a small margin to dots for internal spacing within grid cells */
+            margin: 1px; 
+        }
+
+        /* Red dots for 1 and 4 */
+        /* This applies to ALL visible dots when data-value is 1 or 4 */
+        .dice-button[data-value="1"] .dot,
+        .dice-button[data-value="4"] .dot {
+            background-color: red;
+        }
+
+        /* Custom Dice Patterns based on the provided image */
+        /*
+            Grid cells logical mapping (1-indexed nth-child):
+            1 2 3
+            4 5 6
+            7 8 9
+        */
+
+        /* Value 1 (red): Center dot (cell 5) */
+        .dice-button[data-value="1"] .dot:nth-child(5) { display: block; }
+
+        /* Value 2 (black): Top-left (cell 1) and Bottom-right (cell 9) */
+        .dice-button[data-value="2"] .dot:nth-child(1),
+        .dice-button[data-value="2"] .dot:nth-child(9) { display: block; }
+
+        /* Value 3 (black): Top-left (cell 1), Center (cell 5), Bottom-right (cell 9) */
+        .dice-button[data-value="3"] .dot:nth-child(1),
+        .dice-button[data-value="3"] .dot:nth-child(5),
+        .dice-button[data-value="3"] .dot:nth-child(9) { display: block; }
+
+        /* Value 4 (red): Top-left (cell 1), Top-right (cell 3), Bottom-left (cell 7), Bottom-right (cell 9) */
+        .dice-button[data-value="4"] .dot:nth-child(1),
+        .dice-button[data-value="4"] .dot:nth-child(3),
+        .dice-button[data-value="4"] .dot:nth-child(7),
+        .dice-button[data-value="4"] .dot:nth-child(9) { display: block; }
+
+        /* Value 5 (black): All four corners (cells 1, 3, 7, 9) + Center (cell 5) */
+        .dice-button[data-value="5"] .dot:nth-child(1),
+        .dice-button[data-value="5"] .dot:nth-child(3),
+        .dice-button[data-value="5"] .dot:nth-child(5),
+        .dice-button[data-value="5"] .dot:nth-child(7),
+        .dice-button[data-value="5"] .dot:nth-child(9) { display: block; }
+
+        /* Value 6 (black): All six side dots (cells 1, 3, 4, 6, 7, 9) */
+        /* This matches the image's 6-dot pattern (top-left, top-right, middle-left, middle-right, bottom-left, bottom-right) */
+        .dice-button[data-value="6"] .dot:nth-child(1),
+        .dice-button[data-value="6"] .dot:nth-child(3),
+        .dice-button[data-value="6"] .dot:nth-child(4),
+        .dice-button[data-value="6"] .dot:nth-child(6),
+        .dice-button[data-value="6"] .dot:nth-child(7),
+        .dice-button[data-value="6"] .dot:nth-child(9) { display: block; }
+        
+        @keyframes diceRoll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .last-roll-info {
+            font-size: 1em;
+            color: #666;
+            min-height: 1.2em;
+        }
+        
+        .message, .win-message {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .message {
+            font-size: 1em;
+            color: #FF5722;
+        }
+        .win-message {
+            color: var(--primary-color);
+            font-size: 1.5em;
+        }
+        .reset-button {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .reset-button:hover {
+            background-color: #FFA000;
+        }
+
+        /* Game Board Styles */
+        .game-board-container {
+            background-color: var(--white-bg);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        #gameBoard {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+            border: 2px solid var(--border-color);
+            table-layout: fixed;
+        }
+        #gameBoard td {
+            width: 10%;
+            height: 10%;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #666;
+            background-color: #fdfdfd;
+            transition: background-color 0.3s ease;
+            position: relative;
+            padding: 0;
+        }
+        #gameBoard td span {
+             display: block;
+             width: 100%;
+             height: 100%;
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             padding: 2px;
+             box-sizing: border-box;
+        }
+
+        /* Highlight current position (snake head) */
+        #gameBoard td.current-position {
+            background-color: #dcedc8;
+            color: var(--text-color);
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+        #gameBoard td.current-position::before {
+            content: '🐍';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8em;
+            z-index: 1;
+        }
+        #gameBoard td.current-position span {
+            display: none;
+        }
+
+        /* Responsive Adjustments */
+        @media (min-width: 768px) {
+            body {
+                justify-content: center;
+                padding: 40px 20px;
+            }
+            .game-wrapper {
+                flex-direction: row;
+                align-items: flex-start;
+                max-width: 900px;
+            }
+            .game-info-container {
+                flex: 1;
+                padding: 40px;
+            }
+            .game-board-container {
+                flex: 1;
+                padding: 20px;
+            }
+            .game-settings-container {
+                flex: 1;
+                margin-bottom: 0;
+            }
+            .settings-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            h1 {
+                font-size: 2.5em;
+            }
+            .instructions {
+                font-size: 1.1em;
+            }
+            .stat-item {
+                font-size: 1.5em;
+            }
+            .stat-item span {
+                font-size: 1.8em;
+            }
+            .dice-button {
+                width: 80px;
+                height: 80px;
+            }
+            .dot {
+                width: 18px;
+                height: 18px;
+            }
+            .last-roll-info {
+                font-size: 1.2em;
+            }
+            .win-message {
+                font-size: 1.8em;
+            }
+            #gameBoard td {
+                font-size: 1em;
+            }
+            #gameBoard td.current-position::before {
+                font-size: 2.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="game-info-container" id="gameInfoSection" style="display: none;">
+            <h1>加法蛇遊戲 🐍</h1>
+            <p class="instructions">玩家輪流擲骰子 (1-6)。目標是讓總和達到或超過 <span id="displayWinningSum"></span>。加到或超過目標數字的人獲勝！</p>
+            
+            <div class="game-stats">
+                <div class="stat-item current-sum">目前總和: <span class="stat-value" id="currentSum">0</span></div>
+                <div class="stat-item player-turn">目前輪到: <span class="stat-value" id="playerTurn">玩家 1</span></div>
+            </div>
+            
+            <div class="dice-area">
+                <div class="dice-button" id="diceButton" onclick="makeMove()">
+                    <div class="dice-dots">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                </div>
+                <p class="last-roll-info" id="lastRollInfo">點擊骰子開始遊戲！</p>
+            </div>
+            
+            <p class="message" id="gameMessage"></p>
+            <p class="win-message" id="winMessage"></p>
+
+            <button class="reset-button" onclick="resetGame()" style="display: none;">重新開始</button>
+        </div>
+
+        <div class="game-settings-container" id="gameSettingsSection">
+            <h2>遊戲設定</h2>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label for="winningSumInput">目標總和:</label>
+                    <input type="number" id="winningSumInput" min="10" value="100">
+                </div>
+                <div class="setting-item">
+                    <label for="numPlayersInput">玩家人數:</label>
+                    <input type="number" id="numPlayersInput" min="2" max="6" value="2">
+                </div>
+            </div>
+            <button class="start-game-button" onclick="startGame()">開始遊戲</button>
+        </div>
+
+        <div class="game-board-container" id="gameBoardSection" style="display: none;">
+            <table id="gameBoard"></table>
+        </div>
+    </div>
+
+    <script>
+        let currentSum = 0;
+        let playerTurn = 1; 
+        let winningSum = 100; // Default, will be set by input
+        let numPlayers = 2; // Default, will be set by input
+
+        const currentSumDisplay = document.getElementById('currentSum');
+        const playerTurnDisplay = document.getElementById('playerTurn');
+        const lastRollInfoDisplay = document.getElementById('lastRollInfo');
+        const gameMessageDisplay = document.getElementById('gameMessage');
+        const winMessageDisplay = document.getElementById('winMessage');
+        const resetButton = document.querySelector('.reset-button');
+        const diceButton = document.getElementById('diceButton');
+        
+        const gameBoard = document.getElementById('gameBoard');
+        const displayWinningSum = document.getElementById('displayWinningSum');
+
+        // Settings elements
+        const winningSumInput = document.getElementById('winningSumInput');
+        const numPlayersInput = document.getElementById('numPlayersInput');
+        const startGameButton = document.querySelector('.start-game-button');
+        const gameSettingsSection = document.getElementById('gameSettingsSection');
+        const gameInfoSection = document.getElementById('gameInfoSection');
+        const gameBoardSection = document.getElementById('gameBoardSection');
+
+        // --- Game Board Initialization ---
+        function createGameBoard() {
+            gameBoard.innerHTML = ''; // Clear existing board
+            const maxBoardNumber = winningSum - 1; 
+            const numRows = Math.max(1, Math.ceil((maxBoardNumber + 1) / 10)); 
+
+            for (let i = 0; i < numRows; i++) {
+                const row = gameBoard.insertRow();
+                const actualRow = numRows - 1 - i; 
+
+                if (actualRow % 2 === 0) { // Even rows (0, 2, 4...) fill left to right
+                    for (let j = 0; j < 10; j++) {
+                        const cell = row.insertCell();
+                        const num = actualRow * 10 + j;
+                        cell.setAttribute('data-index', num);
+                        if (num <= maxBoardNumber) { 
+                            cell.innerHTML = `<span>${num}</span>`;
+                        } else {
+                            cell.style.visibility = 'hidden'; 
+                            cell.innerHTML = ''; 
+                        }
+                    }
+                } else { // Odd rows (1, 3, 5...) fill right to left
+                    for (let j = 9; j >= 0; j--) {
+                        const cell = row.insertCell();
+                        const num = actualRow * 10 + j;
+                        cell.setAttribute('data-index', num);
+                        if (num <= maxBoardNumber) { 
+                            cell.innerHTML = `<span>${num}</span>`;
+                        } else {
+                            cell.style.visibility = 'hidden'; 
+                            cell.innerHTML = ''; 
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateSnakePosition() {
+            const prevCell = document.querySelector('.current-position');
+            if (prevCell) {
+                prevCell.classList.remove('current-position');
+                const span = prevCell.querySelector('span');
+                if (span) span.style.display = 'flex'; 
+            }
+
+            const boardPosition = Math.min(currentSum, winningSum - 1); 
+            const newCell = document.querySelector(`[data-index="${boardPosition}"]`);
+            if (newCell) {
+                newCell.classList.add('current-position');
+                const span = newCell.querySelector('span');
+                if (span) span.style.display = 'none'; 
+            }
+        }
+
+        // --- Dice Animation & Face Setting ---
+        function setDiceFace(value) {
+            // Remove previous data-value to clear all dots, then set new value
+            diceButton.removeAttribute('data-value'); // Clears all current dot displays and colors
+            // Use a small timeout to ensure DOM update and re-render for color reset
+            setTimeout(() => {
+                diceButton.setAttribute('data-value', value);
+            }, 10); // A very small delay, usually enough for re-render
+        }
+
+        function rollDiceAnimation(callback) {
+            diceButton.classList.add('rolling');
+            lastRollInfoDisplay.textContent = '骰子投擲中...';
+
+            let rollCount = 0;
+            const animationInterval = setInterval(() => {
+                const tempRoll = Math.floor(Math.random() * 6) + 1;
+                setDiceFace(tempRoll); // Set temporary face for animation
+                rollCount++;
+                if (rollCount > 10) { 
+                    clearInterval(animationInterval);
+                    diceButton.classList.remove('rolling');
+                    callback();
+                }
+            }, 80); 
+        }
+
+        // --- Game Logic ---
+        function updateGameDisplay() {
+            currentSumDisplay.textContent = currentSum;
+            playerTurnDisplay.textContent = `玩家 ${playerTurn}`;
+            gameMessageDisplay.textContent = '';
+            winMessageDisplay.textContent = '';
+            lastRollInfoDisplay.textContent = '點擊骰子開始遊戲！';
+            resetButton.style.display = 'none';
+            diceButton.style.display = 'flex'; 
+            diceButton.onclick = makeMove;
+            setDiceFace(1); // Set initial dice face to 1
+            displayWinningSum.textContent = winningSum; // Update winning sum display in instructions
+        }
+
+        function makeMove() {
+            // Prevent multiple clicks during animation
+            diceButton.onclick = null; 
+            rollDiceAnimation(() => {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                lastRollInfoDisplay.textContent = `你擲出了 ${roll} 點！`;
+
+                currentSum += roll;
+                currentSumDisplay.textContent = currentSum;
+
+                setDiceFace(roll); // Set final face after roll
+                
+                updateSnakePosition(); 
+
+                if (currentSum >= winningSum) {
+                    winMessageDisplay.textContent = `恭喜玩家 ${playerTurn}！總和達到 ${currentSum}，你贏了！🎉`;
+                    diceButton.style.display = 'none';
+                    resetButton.style.display = 'block';
+                } else {
+                    playerTurn = (playerTurn % numPlayers) + 1; // Cycle through players
+                    playerTurnDisplay.textContent = `玩家 ${playerTurn}`;
+                    diceButton.onclick = makeMove; // Re-enable click for next turn
+                }
+            });
+        }
+
+        function resetGame() {
+            currentSum = 0;
+            playerTurn = 1;
+            updateGameDisplay();
+            updateSnakePosition(); 
+            // Show settings again
+            gameSettingsSection.style.display = 'block';
+            gameInfoSection.style.display = 'none';
+            gameBoardSection.style.display = 'none';
+            // Enable settings inputs
+            winningSumInput.disabled = false;
+            numPlayersInput.disabled = false;
+            startGameButton.disabled = false;
+        }
+
+        function startGame() {
+            const enteredWinningSum = parseInt(winningSumInput.value);
+            const enteredNumPlayers = parseInt(numPlayersInput.value);
+
+            if (isNaN(enteredWinningSum) || enteredWinningSum < 10) {
+                gameMessageDisplay.textContent = "目標總和至少要 10！";
+                return;
+            }
+            if (isNaN(enteredNumPlayers) || enteredNumPlayers < 2 || enteredNumPlayers > 6) {
+                gameMessageDisplay.textContent = "玩家人數請輸入 2 到 6 之間！";
+                return;
+            }
+
+            winningSum = enteredWinningSum;
+            numPlayers = enteredNumPlayers;
+            currentSum = 0; // Reset sum for new game
+            playerTurn = 1; // Player 1 always starts
+
+            // Hide settings, show game
+            gameSettingsSection.style.display = 'none';
+            gameInfoSection.style.display = 'block';
+            gameBoardSection.style.display = 'flex'; // Ensure flex for board container
+
+            // Disable settings inputs after starting game
+            winningSumInput.disabled = true;
+            numPlayersInput.disabled = true;
+            startGameButton.disabled = true;
+
+            createGameBoard(); // Recreate board based on new winningSum
+            updateGameDisplay();
+            updateSnakePosition(); // Place snake at 0
+        }
+
+        // Initial state: show settings, hide game
+        gameInfoSection.style.display = 'none';
+        gameBoardSection.style.display = 'none';
+        gameSettingsSection.style.display = 'block';
+        
+        // Set initial dice face to 1 when page loads (before game starts)
+        setDiceFace(1); 
+    </script>
+</body>
+</html>
