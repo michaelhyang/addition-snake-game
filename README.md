@@ -1,1 +1,1 @@
-# addition-snake-game
+# small-game
