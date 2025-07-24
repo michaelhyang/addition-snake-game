@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>條碼掃描系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f2f2f7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007AFF;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .scanner-container {
+            position: relative;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        #scanner {
+            width: 100%;
+            height: 300px;
+            border: none;
+            display: none;
+        }
+
+        .scanner-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 120px;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .scanner-overlay::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            border-radius: 8px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            background: #0056CC;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn.stop {
+            background: #FF3B30;
+        }
+
+        .btn.stop:hover {
+            background: #D70015;
+        }
+
+        .results {
+            background: #f2f2f7;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .results h3 {
+            color: #1d1d1f;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .barcode-item {
+            background: white;
+            border: 1px solid #d1d1d6;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .barcode-info {
+            flex: 1;
+        }
+
+        .barcode-code {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Courier, monospace;
+            font-size: 16px;
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        .barcode-time {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-top: 4px;
+        }
+
+        .delete-btn {
+            background: #FF3B30;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .delete-btn:hover {
+            background: #D70015;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1rem;
+        }
+
+        .status.ready {
+            color: #34C759;
+        }
+
+        .status.scanning {
+            color: #007AFF;
+        }
+
+        .status.error {
+            color: #FF3B30;
+        }
+
+        .export-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .export-btn {
+            background: #34C759;
+        }
+
+        .export-btn:hover {
+            background: #28A745;
+        }
+
+        .clear-btn {
+            background: #8E8E93;
+        }
+
+        .clear-btn:hover {
+            background: #6D6D70;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .btn {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 條碼掃描系統</h1>
+            <p>使用手機相機掃描各種條形碼</p>
+        </div>
+        
+        <div class="content">
+            <div class="scanner-container">
+                <div id="scanner"></div>
+                <div class="scanner-overlay"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="startBtn" class="btn">🎯 開始掃描</button>
+                <button id="stopBtn" class="btn stop" style="display: none;">⏹️ 停止掃描</button>
+            </div>
+            
+            <div id="status" class="status ready">
+                📋 準備就緒，點擊開始掃描按鈕
+            </div>
+            
+            <div class="results">
+                <h3>📊 掃描結果 (<span id="count">0</span>)</h3>
+                <div id="barcodeList"></div>
+                
+                <div class="export-section">
+                    <button id="exportBtn" class="btn export-btn">📤 匯出資料</button>
+                    <button id="clearBtn" class="btn clear-btn">🗑️ 清除所有</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BarcodeScanner {
+            constructor() {
+                this.barcodes = [];
+                this.isScanning = false;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.status = document.getElementById('status');
+                this.barcodeList = document.getElementById('barcodeList');
+                this.count = document.getElementById('count');
+                this.exportBtn = document.getElementById('exportBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.scanner = document.getElementById('scanner');
+            }
+
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startScanning());
+                this.stopBtn.addEventListener('click', () => this.stopScanning());
+                this.exportBtn.addEventListener('click', () => this.exportData());
+                this.clearBtn.addEventListener('click', () => this.clearData());
+            }
+
+            updateStatus(message, type = 'ready') {
+                this.status.textContent = message;
+                this.status.className = `status ${type}`;
+            }
+
+            startScanning() {
+                if (this.isScanning) return;
+
+                this.updateStatus('🔍 正在啟動相機...', 'scanning');
+                this.startBtn.style.display = 'none';
+                this.stopBtn.style.display = 'inline-block';
+                this.scanner.style.display = 'block';
+
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: this.scanner,
+                        constraints: {
+                            width: 640,
+                            height: 480,
+                            facingMode: "environment" // 後鏡頭
+                        }
+                    },
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader",
+                            "upc_reader",
+                            "upc_e_reader"
+                        ]
+                    }
+                }, (err) => {
+                    if (err) {
+                        console.error(err);
+                        this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
+                        this.stopScanning();
+                        return;
+                    }
+                    
+                    this.isScanning = true;
+                    this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
+                    Quagga.start();
+                });
+
+                Quagga.onDetected((data) => {
+                    const code = data.codeResult.code;
+                    this.addBarcode(code);
+                    
+                    // 播放提示音效果
+                    this.playBeep();
+                    
+                    // 暫停一下避免重複掃描
+                    setTimeout(() => {
+                        if (this.isScanning) {
+                            this.updateStatus('📸 掃描成功！繼續對準其他條碼', 'scanning');
+                        }
+                    }, 1000);
+                });
+            }
+
+            stopScanning() {
+                if (!this.isScanning) return;
+
+                Quagga.stop();
+                this.isScanning = false;
+                this.scanner.style.display = 'none';
+                this.startBtn.style.display = 'inline-block';
+                this.stopBtn.style.display = 'none';
+                this.updateStatus('📋 掃描已停止', 'ready');
+            }
+
+            addBarcode(code) {
+                // 檢查是否已存在
+                if (this.barcodes.some(item => item.code === code)) {
+                    this.updateStatus('⚠️ 此條碼已掃描過', 'scanning');
+                    return;
+                }
+
+                const barcode = {
+                    code: code,
+                    timestamp: new Date().toLocaleString('zh-TW'),
+                    id: Date.now()
+                };
+
+                this.barcodes.unshift(barcode);
+                this.renderBarcodes();
+                this.updateStatus(`✅ 已新增條碼: ${code}`, 'scanning');
+            }
+
+            renderBarcodes() {
+                this.count.textContent = this.barcodes.length;
+                
+                if (this.barcodes.length === 0) {
+                    this.barcodeList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">尚未掃描任何條碼</p>';
+                    return;
+                }
+
+                this.barcodeList.innerHTML = this.barcodes.map(barcode => `
+                    <div class="barcode-item">
+                        <div class="barcode-info">
+                            <div class="barcode-code">${barcode.code}</div>
+                            <div class="barcode-time">${barcode.timestamp}</div>
+                        </div>
+                        <button class="delete-btn" onclick="scanner.deleteBarcode(${barcode.id})">刪除</button>
+                    </div>
+                `).join('');
+            }
+
+            deleteBarcode(id) {
+                this.barcodes = this.barcodes.filter(item => item.id !== id);
+                this.renderBarcodes();
+                this.updateStatus('🗑️ 已刪除條碼', 'ready');
+            }
+
+            clearData() {
+                if (this.barcodes.length === 0) return;
+                
+                if (confirm('確定要清除所有掃描結果嗎？')) {
+                    this.barcodes = [];
+                    this.renderBarcodes();
+                    this.updateStatus('🗑️ 已清除所有資料', 'ready');
+                }
+            }
+
+            exportData() {
+                if (this.barcodes.length === 0) {
+                    alert('沒有資料可以匯出');
+                    return;
+                }
+
+                const data = {
+                    exportTime: new Date().toISOString(),
+                    totalCount: this.barcodes.length,
+                    barcodes: this.barcodes
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], {
+                    type: 'application/json'
+                });
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `barcodes_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.updateStatus('📤 資料已匯出', 'ready');
+            }
+
+            playBeep() {
+                // 簡單的提示音效果
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        }
+
+        // 初始化掃描器
+        const scanner = new BarcodeScanner();
+
+        // 頁面載入完成後初始化顯示
+        document.addEventListener('DOMContentLoaded', () => {
+            scanner.renderBarcodes();
+        });
+    </script>
+</body>
+</html>
