@@ -272,7 +272,7 @@
     <div class="container">
         <div class="header">
             <h1>📱 條碼掃描系統</h1>
-            <p>使用手機相機掃描各種條形碼</p>
+            <p>使用手機相機掃描 Code 128 條碼</p>
         </div>
         
         <div class="content">
@@ -307,6 +307,7 @@
             constructor() {
                 this.barcodes = [];
                 this.isScanning = false;
+                this.pauseScanning = false; // Add pauseScanning property
                 this.initializeElements();
                 this.bindEvents();
             }
@@ -320,6 +321,8 @@
                 this.exportBtn = document.getElementById('exportBtn');
                 this.clearBtn = document.getElementById('clearBtn');
                 this.scanner = document.getElementById('scanner');
+                this.video = null; // To store the video element
+                this.stream = null; // To store the media stream
             }
 
             bindEvents() {
@@ -334,7 +337,7 @@
                 this.status.className = `status ${type}`;
             }
 
-            startScanning() {
+            async startScanning() {
                 if (this.isScanning) return;
 
                 this.updateStatus('🔍 正在啟動相機...', 'scanning');
@@ -342,14 +345,16 @@
                 this.stopBtn.style.display = 'inline-block';
                 this.scanner.style.display = 'block';
 
-                // 使用 getUserMedia 直接控制相機
-                navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: "environment",
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                }).then(stream => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: "environment",
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    });
+                    this.stream = stream;
+
                     const video = document.createElement('video');
                     video.srcObject = stream;
                     video.setAttribute('playsinline', true);
@@ -359,26 +364,24 @@
                     
                     this.scanner.innerHTML = '';
                     this.scanner.appendChild(video);
-                    
+                    this.video = video; // Store the video element
+
                     video.play();
                     this.isScanning = true;
-                    this.stream = stream;
-                    this.video = video;
                     
                     this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
                     
-                    // 開始掃描循環
                     this.scanLoop();
                     
-                }).catch(err => {
+                } catch (err) {
                     console.error('相機啟動失敗:', err);
                     this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
                     this.stopScanning();
-                });
+                }
             }
 
             scanLoop() {
-                if (!this.isScanning || this.pauseScanning) {
+                if (!this.isScanning || this.pauseScanning || !this.video) {
                     if (this.isScanning) {
                         requestAnimationFrame(() => this.scanLoop());
                     }
@@ -395,16 +398,13 @@
                     context.drawImage(this.video, 0, 0, canvas.width, canvas.height);
                     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                     
-                    // 使用 Quagga 掃描條形碼，限制掃描區域
                     this.scanWithQuagga(imageData);
                 }
                 
-                // 繼續掃描
                 requestAnimationFrame(() => this.scanLoop());
             }
 
             scanWithQuagga(imageData) {
-                // 限制掃描區域到中央部分，提高準確性
                 const centerX = imageData.width / 2;
                 const centerY = imageData.height / 2;
                 const scanWidth = Math.min(imageData.width * 0.8, 400);
@@ -413,7 +413,6 @@
                 const startX = Math.max(0, centerX - scanWidth / 2);
                 const startY = Math.max(0, centerY - scanHeight / 2);
                 
-                // 創建裁剪後的 canvas
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.width = scanWidth;
@@ -421,7 +420,6 @@
                 
                 const croppedImageData = context.createImageData(scanWidth, scanHeight);
                 
-                // 複製中央區域的像素數據
                 for (let y = 0; y < scanHeight; y++) {
                     for (let x = 0; x < scanWidth; x++) {
                         const sourceX = startX + x;
@@ -439,7 +437,6 @@
                     }
                 }
                 
-                // 使用 Quagga 掃描裁剪後的圖像
                 Quagga.decodeSingle({
                     src: croppedImageData,
                     numOfWorkers: 0,
@@ -451,13 +448,7 @@
                         const code = result.codeResult.code;
                         const format = result.codeResult.format;
                         
-                        console.log('=== Quagga 掃描結果 ===');
-                        console.log('條碼內容:', code);
-                        console.log('條碼格式:', format);
-                        console.log('條碼長度:', code.length);
-                        console.log('=====================');
-                        
-                        if (format === 'code_128' && code.length > 8) {
+                        if (format === 'code_128') { // Only process Code 128
                             this.addBarcode(code);
                             this.playBeep();
                         }
@@ -470,7 +461,6 @@
 
                 this.isScanning = false;
                 
-                // 停止相機串流
                 if (this.stream) {
                     this.stream.getTracks().forEach(track => track.stop());
                 }
@@ -483,12 +473,8 @@
             }
 
             addBarcode(code) {
-                // 清理條碼內容
                 const cleanCode = code.trim();
                 
-                console.log('準備添加條碼:', cleanCode);
-                
-                // 檢查是否已存在（不區分大小寫）
                 const exists = this.barcodes.some(item => 
                     item.code.toLowerCase() === cleanCode.toLowerCase()
                 );
@@ -508,7 +494,6 @@
                 this.renderBarcodes();
                 this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
                 
-                // 暫停掃描2秒避免重複掃描
                 this.pauseScanning = true;
                 setTimeout(() => {
                     this.pauseScanning = false;
@@ -582,7 +567,6 @@
             }
 
             playBeep() {
-                // 簡單的提示音效果
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -601,10 +585,8 @@
             }
         }
 
-        // 初始化掃描器
         const scanner = new BarcodeScanner();
 
-        // 頁面載入完成後初始化顯示
         document.addEventListener('DOMContentLoaded', () => {
             scanner.renderBarcodes();
         });
