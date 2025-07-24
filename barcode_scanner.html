@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>條碼掃描器 (精簡版)</title>
+    <title>條碼掃描器</title>
     <script src="https://unpkg.com/@zxing/library@latest"></script>
     <style>
         /* 全局設置 */
@@ -177,7 +177,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">條碼掃描器 (精簡版)</div>
+        <div class="header">條碼掃描器</div>
         
         <div class="scanner-container">
             <video id="video" autoplay muted playsinline></video>
@@ -251,7 +251,8 @@
                 const mediaStreamConstraints = {
                     video: { // 請求視訊，並指定理想解析度
                         width: { ideal: 640 },
-                        height: { ideal: 480 }
+                        height: { ideal: 480 },
+                        facingMode: 'environment' // <--- 添加這一行，指定為後置相機
                     },
                     audio: false // 明確指定不請求音訊
                 };
