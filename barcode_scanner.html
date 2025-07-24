@@ -337,12 +337,18 @@
                     },
                     decoder: {
                         readers: [
-                            "code_128_reader",
-                            "ean_reader",
-                            "ean_8_reader",
-                            "upc_reader",
-                            "upc_e_reader"
-                        ]
+                            "code_128_reader"
+                        ],
+                        debug: {
+                            drawBoundingBox: true,
+                            showFrequency: false,
+                            drawScanline: true,
+                            showPattern: false
+                        }
+                    },
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true
                     }
                 }, (err) => {
                     if (err) {
@@ -359,17 +365,12 @@
 
                 Quagga.onDetected((data) => {
                     const code = data.codeResult.code;
+                    console.log('掃描到條碼:', code); // 除錯用
+                    
                     this.addBarcode(code);
                     
                     // 播放提示音效果
                     this.playBeep();
-                    
-                    // 暫停一下避免重複掃描
-                    setTimeout(() => {
-                        if (this.isScanning) {
-                            this.updateStatus('📸 掃描成功！繼續對準其他條碼', 'scanning');
-                        }
-                    }, 1000);
                 });
             }
 
@@ -385,21 +386,43 @@
             }
 
             addBarcode(code) {
-                // 檢查是否已存在
-                if (this.barcodes.some(item => item.code === code)) {
+                // 清理條碼內容，移除可能的空白字符
+                const cleanCode = code.trim();
+                
+                // 檢查是否已存在（不區分大小寫）
+                const exists = this.barcodes.some(item => 
+                    item.code.toLowerCase() === cleanCode.toLowerCase()
+                );
+                
+                if (exists) {
                     this.updateStatus('⚠️ 此條碼已掃描過', 'scanning');
                     return;
                 }
 
+                // 驗證條碼格式（英文字母+數字的組合）
+                if (!/^[A-Za-z0-9]+$/.test(cleanCode)) {
+                    this.updateStatus('⚠️ 條碼格式異常，請重新掃描', 'scanning');
+                    return;
+                }
+
                 const barcode = {
-                    code: code,
+                    code: cleanCode,
                     timestamp: new Date().toLocaleString('zh-TW'),
                     id: Date.now()
                 };
 
                 this.barcodes.unshift(barcode);
                 this.renderBarcodes();
-                this.updateStatus(`✅ 已新增條碼: ${code}`, 'scanning');
+                this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
+                
+                // 暫停掃描1.5秒避免重複掃描
+                Quagga.stop();
+                setTimeout(() => {
+                    if (this.isScanning) {
+                        Quagga.start();
+                        this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
+                    }
+                }, 1500);
             }
 
             renderBarcodes() {
