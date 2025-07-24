@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>條碼掃描器</title>
-    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <title>條碼掃描器 (QuaggaJS2)</title>
     <style>
         /* 全局設置 */
         * {
@@ -14,7 +13,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
             display: flex;
@@ -33,7 +32,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             overflow: hidden;
             margin-bottom: 20px;
-            padding: 20px; /* Simplified padding */
+            padding: 20px;
         }
 
         /* 標題區塊 */
@@ -44,8 +43,8 @@
             text-align: center;
             font-size: 1.8rem;
             font-weight: 700;
-            border-radius: 8px 8px 0 0; /* Match container top corners */
-            margin: -20px -20px 20px -20px; /* Adjust to container padding */
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
         }
 
         /* 掃描器視訊容器 */
@@ -55,35 +54,82 @@
             border-radius: 10px;
             overflow: hidden;
             background: #f5f5f5;
-            min-height: 250px; /* Minimum height for video */
+            /* 移除 min-height，讓 #reader 內部元素決定高度 */
+            /* min-height: 250px; */ 
             display: flex;
             justify-content: center;
             align-items: center;
             border: 1px solid #ddd;
         }
 
-        #video {
+        /* QuaggaJS2 將在 #reader 這個 div 內渲染它的相機畫面和 UI */
+        #reader {
             width: 100%;
-            height: auto;
+            /* 使用 padding-top 來維持 16:9 的長寬比 */
+            padding-top: 56.25%; /* (9 / 16) * 100% = 56.25% */
+            position: relative; 
+            overflow: hidden; /* 確保內容不溢出 */
+        }
+        
+        /* QuaggaJS2 生成的視訊和畫布元素樣式調整 */
+        #reader video, #reader canvas {
+            width: 100%;
+            height: 100%; /* 填充父容器的高度 */
             display: block;
-            object-fit: cover; /* Ensures video fills container */
             border-radius: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: cover; /* 確保視訊內容填滿容器而不變形 */
+        }
+        /* 如果 Quagga 沒有初始化成功，保持容器可見 */
+        #reader:empty {
+            min-height: 250px; /* 保持預留空間 */
+            background-color: #f5f5f5; /* 背景色 */
         }
 
-        /* 紅色掃描線疊層 */
-        #red-line {
+        /* 紅色對準線 */
+        .scan-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px; /* 線的粗細 */
+            background-color: #FF3B30; /* 紅色 */
+            transform: translateY(-50%);
+            z-index: 2; /* 確保在 video 和 canvas 之上 */
+            box-shadow: 0 0 10px rgba(255, 59, 48, 0.7); /* 發光效果 */
+            width: 80%; /* 線的寬度，可調整 */
+            margin: 0 auto; /* 水平居中 */
+        }
+        /* 掃描線動畫 (可選) */
+        .scan-line.active {
+             animation: scanline-pulse 1.5s infinite alternate;
+        }
+        @keyframes scanline-pulse {
+            from { opacity: 0.8; transform: translateY(-50%) scaleX(1); }
+            to { opacity: 1; transform: translateY(-50%) scaleX(1.02); }
+        }
+
+        /* 新增的對焦框 */
+        .focus-box {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 85%; /* 掃描線寬度 */
-            height: 2px;
-            background-color: #FF3B30; /* 鮮紅色 */
-            box-shadow: 0 0 10px rgba(255, 59, 48, 0.7);
-            z-index: 10;
-            pointer-events: none; /* Allows clicks to pass through */
-            border-radius: 2px;
+            width: 70%; /* 框的寬度 */
+            height: 100px; /* 框的高度，根據條碼類型調整 */
+            border: 2px dashed rgba(255, 255, 255, 0.7); /* 白色虛線框 */
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* 遮罩效果 */
+            z-index: 1; /* 在 scan-line 下方，在 video/canvas 上方 */
+            border-radius: 8px; /* 圓角 */
         }
+        /* 如果掃描沒有啟動，隱藏對焦框和紅線 */
+        .scan-elements-hidden .scan-line,
+        .scan-elements-hidden .focus-box {
+            display: none;
+        }
+
 
         /* 控制按鈕區塊 */
         .controls {
@@ -118,7 +164,7 @@
         }
 
         .btn.stop {
-            background-color: #FF3B30; /* 紅色停止按鈕 */
+            background-color: #FF3B30;
         }
         .btn.stop:hover {
             background-color: #D70015;
@@ -129,27 +175,98 @@
             transform: none;
             box-shadow: none;
         }
+        .btn.clear-all {
+            background-color: #6C757D;
+        }
+        .btn.clear-all:hover {
+            background-color: #5A6268;
+        }
 
         /* 狀態訊息 */
         #status-message {
             text-align: center;
-            margin-bottom: 0; /* No margin below if it's the last element */
+            margin-bottom: 0;
             font-size: 1.1rem;
             color: #666;
-            min-height: 25px; /* Prevent layout shift */
-            word-break: break-all; /* Ensure long results fit */
+            min-height: 25px;
+            word-break: break-all;
             background-color: #f8f8f8;
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #eee;
-            margin-top: 20px; /* Add margin to separate from controls */
+            margin-top: 20px;
         }
 
-        .status-ready { color: #34C759; } /* 綠色 */
-        .status-scanning { color: #007AFF; } /* 藍色 */
-        .status-error { color: #FF3B30; } /* 紅色 */
-        .status-info { color: #FF9500; } /* 橙色 */
+        .status-ready { color: #34C759; }
+        .status-scanning { color: #007AFF; }
+        .status-error { color: #FF3B30; }
+        .status-info { color: #FF9500; }
 
+        /* 掃描結果顯示區塊 */
+        .scanned-results-container {
+            margin-top: 25px;
+            background: #f8f8f8;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #scanned-results-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            word-break: break-all;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .result-item .content {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .result-item .content strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #333;
+        }
+        .result-item .content span {
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        .result-item .delete-btn {
+            background-color: #FF3B30;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .result-item .delete-btn:hover {
+            background-color: #D70015;
+        }
 
         /* 響應式調整 */
         @media (max-width: 500px) {
@@ -172,6 +289,25 @@
                 font-size: 1rem;
                 padding: 12px;
             }
+            .scan-line {
+                width: 90%;
+            }
+            .focus-box {
+                width: 85%;
+                height: 90px;
+            }
+            .result-item {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+            .result-item .content strong {
+                font-size: 1rem;
+            }
+            .result-item .delete-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -179,159 +315,190 @@
     <div class="container">
         <div class="header">條碼掃描器</div>
         
-        <div class="scanner-container">
-            <video id="video" autoplay muted playsinline></video>
-            <div id="red-line"></div>
-        </div>
+        <div class="scanner-container" id="scanner-container">
+            <div id="reader"></div> <div class="scan-line" id="scan-line"></div> <div class="focus-box" id="focus-box"></div> </div>
         
         <div class="controls">
             <button id="toggle-scan-btn" class="btn">🎯 開始掃描</button>
             <button id="rescan-btn" class="btn">🔄 重新掃描</button>
+            <button id="clear-all-btn" class="btn clear-all">🗑️ 清除所有</button>
         </div>
         
         <div id="status-message">📋 準備就緒，點擊開始掃碼</div>
+
+        <div class="scanned-results-container">
+            <h3>掃描結果</h3>
+            <ul id="scanned-results-list">
+                <li style="text-align: center; color: #888;">暫無掃描結果</li>
+            </ul>
+        </div>
     </div>
 
+    <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
     <script>
         class BarcodeScannerApp {
             constructor() {
-                // ZXing Code Reader 實例，只掃描 CODE_128 格式
-                //this.codeReader = new ZXing.BrowserMultiFormatReader(null, {
-                //    formats: [ZXing.BarcodeFormat.CODE_128]
-                //});
-                this.codeReader = new ZXing.BrowserMultiFormatReader();
-                
-                // DOM 元素引用
-                this.videoElement = document.getElementById('video');
                 this.toggleScanBtn = document.getElementById('toggle-scan-btn');
                 this.rescanBtn = document.getElementById('rescan-btn');
+                this.clearAllBtn = document.getElementById('clear-all-btn');
                 this.statusMessageElement = document.getElementById('status-message');
+                this.scanLineElement = document.getElementById('scan-line');
+                this.focusBoxElement = document.getElementById('focus-box'); // 新增對焦框元素
+                this.scannedResultsList = document.getElementById('scanned-results-list');
+                this.scannerContainer = document.getElementById('scanner-container'); // 取得 scanner-container 元素
 
-                this.isScanning = false;  // 掃描狀態
+                this.isScanning = false;
+                this.lastDetectedCode = null;
+                this.results = [];
+                this.nextResultId = 0;
 
                 this.bindEvents();
                 this.updateToggleButtonState();
+                this.loadResultsFromLocalStorage();
+                this.renderResults();
             }
 
-            // 綁定事件監聽器
             bindEvents() {
                 this.toggleScanBtn.addEventListener('click', this.toggleScan.bind(this));
                 this.rescanBtn.addEventListener('click', this.rescan.bind(this));
-                
-                // 處理頁面不可見時停止相機，避免後台佔用資源
+                this.clearAllBtn.addEventListener('click', this.clearAllResults.bind(this));
                 document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
             }
 
-            // 更新按鈕狀態和文字
             updateToggleButtonState() {
                 if (this.isScanning) {
                     this.toggleScanBtn.textContent = '⏹️ 停止掃描';
                     this.toggleScanBtn.classList.add('stop');
-                    this.rescanBtn.disabled = true; // 掃描中禁用重新掃描
+                    this.rescanBtn.disabled = true;
+                    this.scanLineElement.classList.add('active');
+                    // 掃描中顯示掃描線和對焦框
+                    this.scannerContainer.classList.remove('scan-elements-hidden');
                 } else {
                     this.toggleScanBtn.textContent = '🎯 開始掃描';
                     this.toggleScanBtn.classList.remove('stop');
-                    this.rescanBtn.disabled = false; // 停止時啟用重新掃描
+                    this.rescanBtn.disabled = false;
+                    this.scanLineElement.classList.remove('active');
+                    // 掃描停止時隱藏掃描線和對焦框
+                    this.scannerContainer.classList.add('scan-elements-hidden');
                 }
             }
 
-            // 更新狀態訊息
             updateStatus(message, type = 'ready') {
                 this.statusMessageElement.textContent = message;
                 this.statusMessageElement.className = `status-message status-${type}`;
             }
 
-            // 啟動掃描
             async startScan() {
                 if (this.isScanning) return;
 
                 this.updateStatus('🔍 正在啟動相機...', 'info');
-                this.updateToggleButtonState(); // 立即更新按鈕狀態
+                this.updateToggleButtonState();
 
-                // 直接定義傳遞給 getUserMedia 的完整約束條件
-                const mediaStreamConstraints = {
-                    video: { // 請求視訊，並指定理想解析度
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'environment' // <--- 添加這一行，指定為後置相機
+                const config = {
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#reader'),
+                        constraints: {
+                            // 保持理想解析度，讓瀏覽器選擇最接近的
+                            width: { ideal: 1280 }, 
+                            height: { ideal: 720 },
+                            facingMode: "environment"
+                        }
                     },
-                    audio: false // 明確指定不請求音訊
+                    locator: {
+                        patchSize: "medium",
+                        halfSample: true,
+                        locate: true, 
+                    },
+                    decoder: {
+                        readers: [
+                            "code_128_reader",
+                        ]
+                    }
                 };
 
                 try {
-                    // 直接呼叫 getUserMedia 取得視訊流
-                    const stream = await navigator.mediaDevices.getUserMedia(mediaStreamConstraints);
-                    this.videoElement.srcObject = stream; // 將視訊流設定到 <video> 元素
-
-                    // 現在，使用 ZXing 的 decodeFromStream 方法從取得的視訊流中解碼
-                    await this.codeReader.decodeFromStream(
-                        stream, // 將視訊流直接傳遞給 ZXing
-                        this.videoElement,
-                        (result, err) => {
-                            if (result) {
-                                // 確保只處理 CODE_128 格式
-                                if (result.getBarcodeFormat().toString() === 'CODE_128') {
-                                    const scannedCode = result.getText();
-                                    this.updateStatus(`✅ 掃描成功: ${scannedCode}`, 'ready');
-                                    this.playBeep(); // 播放提示音
-                                    this.stopScan(); // 成功掃描後立即停止
-                                }
-                            }
-
-                            // 忽略 NotFoundException（沒有掃描到條碼是正常現象）
-                            if (err && !(err instanceof ZXing.NotFoundException)) {
-                                console.error("掃描錯誤:", err);
-                                this.updateStatus(`❌ 掃描錯誤: ${err.name || err.message}`, 'error');
-                                this.stopScan(); // 停止掃描以避免無限錯誤
-                            }
+                    Quagga.init(config, (err) => {
+                        if (err) {
+                            this.handleCameraError(err);
+                            return;
                         }
-                    );
-                    this.isScanning = true;
-                    this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
-                    this.updateToggleButtonState();
-                    console.log("ZXing 相機已啟動並開始解碼...");
+                        Quagga.onDetected((result) => this.onScanSuccess(result));
+                        Quagga.start();
+                        this.isScanning = true;
+                        this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
+                        this.updateToggleButtonState();
+                    });
 
                 } catch (err) {
-                    console.error("無法啟動相機:", err);
-                    let errorMessage = "❌ 無法啟動相機，請確認權限設定。";
+                    this.handleCameraError(err);
+                }
+            }
 
-                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                        errorMessage = "❌ 需相機權限，請點擊網址列的相機圖標允許。";
-                    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                        errorMessage = "❌ 未找到相機設備。請確認您的筆電有相機。";
-                    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                        errorMessage = "❌ 相機被佔用或無法啟動，請關閉其他程式。";
-                    } else if (err.name === 'OverconstrainedError') {
-                        errorMessage = "❌ 相機配置衝突，請嘗試調整裝置設定。";
-                    } else if (err.name === 'SecurityError') {
-                         errorMessage = "❌ 網頁需透過 HTTPS 或 localhost 運行才能啟動相機。";
+            onScanSuccess(result) {
+                if (result && result.codeResult && result.codeResult.code) {
+                    const decodedText = result.codeResult.code;
+                    const format = result.codeResult.format;
+
+                    if (this.lastDetectedCode === decodedText) {
+                        return;
                     }
-                    this.updateStatus(errorMessage, 'error');
-                    this.isScanning = false;
-                    this.updateToggleButtonState();
+
+                    this.lastDetectedCode = decodedText;
+                    
+                    setTimeout(() => {
+                        this.lastDetectedCode = null;
+                    }, 1000); // 1 秒內不重複識別
+
+                    this.playBeep();
+                    this.updateStatus(`✅ 掃描成功: ${decodedText}`, 'scanning'); 
+                    this.addResultToDisplay(decodedText, format);
                 }
             }
 
-            // 停止掃描
-            async stopScan() {
-                if (!this.isScanning) return; // 如果已經停止，則不執行
+            onScanError(errorMessage) {
+                // QuaggaJS2 沒有連續的 onScanError 回呼
+            }
 
-                // 停止視訊流軌道
-                const stream = this.videoElement.srcObject;
-                if (stream) {
-                    const tracks = stream.getTracks();
-                    tracks.forEach(track => track.stop()); // 停止所有軌道
+            handleCameraError(err) {
+                console.error("無法啟動相機:", err);
+                let errorMessage = "❌ 無法啟動相機，請確認權限設定。";
+
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMessage = "❌ 需相機權限，請點擊網址列的相機圖標允許。";
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMessage = "❌ 未找到相機設備。請確認您的裝置有相機。";
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMessage = "❌ 相機被佔用或無法啟動，請關閉其他程式。";
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage = "❌ 相機約束條件無法滿足，請檢查相機設定或嘗試放寬解析度要求。";
+                } else if (err.name === 'SecurityError') {
+                     errorMessage = "❌ 網頁需透過 HTTPS 或 localhost 運行才能啟動相機。";
+                } else if (err.message && err.message.includes("Could not start video source") || err.message.includes("getUserMedia")) {
+                    errorMessage = "❌ 啟動視訊源失敗，請檢查相機權限或是否有其他應用佔用相機。";
                 }
-
-                this.codeReader.reset(); // 停止解碼並釋放相機資源
+                this.updateStatus(errorMessage, 'error');
                 this.isScanning = false;
-                this.videoElement.srcObject = null; // 清空視訊流
-                this.updateStatus('📋 掃描已停止', 'ready');
                 this.updateToggleButtonState();
-                console.log("ZXing 相機已停止。");
             }
 
-            // 切換掃描狀態 (開始/停止)
+            async stopScan() {
+                if (!this.isScanning) return;
+
+                try {
+                    Quagga.stop();
+                } catch (err) {
+                    console.error("停止相機失敗:", err);
+                    this.updateStatus(`❌ 停止相機失敗: ${err.message}`, 'error');
+                } finally {
+                    this.isScanning = false;
+                    this.updateStatus('📋 掃描已停止', 'ready');
+                    this.updateToggleButtonState();
+                    console.log("QuaggaJS2 相機已停止。");
+                }
+            }
+
             toggleScan() {
                 if (this.isScanning) {
                     this.stopScan();
@@ -340,18 +507,14 @@
                 }
             }
 
-            // 重新掃描 (停止後再啟動)
             async rescan() {
-                // 如果當前正在掃描，先停止
                 if (this.isScanning) {
                     await this.stopScan();
                 }
                 this.updateStatus('🔄 重新啟動掃描中...', 'info');
-                // 重新啟動掃描
                 await this.startScan();
             }
             
-            // 播放提示音
             playBeep() {
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -361,11 +524,11 @@
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
                     
-                    oscillator.frequency.value = 800; // 頻率
-                    oscillator.type = 'sine'; // 正弦波
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
                     
                     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1); // 快速衰減
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
                     
                     oscillator.start(audioContext.currentTime);
                     oscillator.stop(audioContext.currentTime + 0.1);
@@ -374,19 +537,95 @@
                 }
             }
 
-            // 處理頁面可見性改變（切換標籤頁等）
             handleVisibilityChange() {
                 if (document.hidden && this.isScanning) {
                     this.stopScan();
                     this.updateStatus('頁面已切換，掃描自動停止', 'info');
                 }
             }
+
+            // === 掃描結果管理功能 ===
+
+            addResultToDisplay(text, format) {
+                const newResult = {
+                    id: this.nextResultId++,
+                    text: text,
+                    format: format,
+                    timestamp: new Date().toLocaleString()
+                };
+                this.results.push(newResult);
+                this.saveResultsToLocalStorage();
+                this.renderResults();
+            }
+
+            deleteResult(id) {
+                this.results = this.results.filter(result => result.id !== id);
+                this.saveResultsToLocalStorage();
+                this.renderResults();
+            }
+
+            clearAllResults() {
+                if (confirm('確定要清除所有掃描結果嗎？')) {
+                    this.results = [];
+                    this.saveResultsToLocalStorage();
+                    this.renderResults();
+                    this.updateStatus('所有掃描結果已清除', 'info');
+                }
+            }
+
+            renderResults() {
+                this.scannedResultsList.innerHTML = '';
+                if (this.results.length === 0) {
+                    const noResultItem = document.createElement('li');
+                    noResultItem.style.textAlign = 'center';
+                    noResultItem.style.color = '#888';
+                    noResultItem.textContent = '暫無掃描結果';
+                    this.scannedResultsList.appendChild(noResultItem);
+                    this.clearAllBtn.disabled = true;
+                } else {
+                    this.clearAllBtn.disabled = false;
+                    this.results.forEach(result => {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'result-item';
+                        listItem.dataset.id = result.id;
+
+                        listItem.innerHTML = `
+                            <div class="content">
+                                <strong>${result.text}</strong>
+                                <span>格式: ${result.format} | ${result.timestamp}</span>
+                            </div>
+                            <button class="delete-btn">✖</button>
+                        `;
+
+                        const deleteButton = listItem.querySelector('.delete-btn');
+                        deleteButton.addEventListener('click', () => this.deleteResult(result.id));
+
+                        this.scannedResultsList.appendChild(listItem);
+                    });
+                }
+            }
+
+            saveResultsToLocalStorage() {
+                localStorage.setItem('scannedBarcodes', JSON.stringify(this.results));
+                localStorage.setItem('nextResultId', this.nextResultId.toString());
+            }
+
+            loadResultsFromLocalStorage() {
+                const storedResults = localStorage.getItem('scannedBarcodes');
+                const storedNextId = localStorage.getItem('nextResultId');
+                if (storedResults) {
+                    this.results = JSON.parse(storedResults);
+                    this.nextResultId = storedNextId ? parseInt(storedNextId, 10) : (this.results.length > 0 ? Math.max(...this.results.map(r => r.id)) + 1 : 0);
+                } else {
+                    this.results = [];
+                    this.nextResultId = 0;
+                }
+            }
         }
 
-        // 頁面載入完成後初始化應用程式
         document.addEventListener('DOMContentLoaded', () => {
             const scannerApp = new BarcodeScannerApp();
-            scannerApp.startScan(); // 自動啟動掃碼
+            scannerApp.startScan();
         });
     </script>
 </body>
