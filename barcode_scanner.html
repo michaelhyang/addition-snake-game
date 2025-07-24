@@ -214,8 +214,7 @@
         <h1>條碼掃描器</h1>
 
         <div id="videoContainer">
-            <video id="video" playsinline></video>
-            <div class="scan-overlay">
+            <video id="video" playsinline muted></video> <div class="scan-overlay">
                 <div class="scan-line"></div>
             </div>
             <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
@@ -291,15 +290,7 @@
                     resetButton.style.display = 'inline-block';
                 }
             }, {
-                // Constraints for camera resolution and facing mode
-                constraints: {
-                    video: {
-                        facingMode: 'environment', // Use rear camera if available
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    }
-                },
-                // Hint for desired formats, though decodeContinuously handles it
+                // 僅保留 formats 提示，因為 getUserMedia 已在外部處理相機串流
                 formats: [ZXing.BarcodeFormat.CODE_128]
             });
         }
@@ -307,10 +298,11 @@
         // Start scanning function
         async function startScanning() {
             try {
-                // Request camera permission
+                // Request camera permission with facingMode: 'environment' (後置鏡頭)
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
-                video.play();
+                // 確保影片加載完成元數據後再播放
+                await video.play();
 
                 initializeCodeReader(); // Start decoding
 
@@ -327,7 +319,9 @@
                 } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
                     showMessage(errorText, '未找到相機設備。', 'error');
                 } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                     showMessage(errorText, '相機已被使用或無法啟動。', 'error');
+                    showMessage(errorText, '相機已被使用或無法啟動。', 'error');
+                } else if (err.name === 'OverconstrainedError') {
+                    showMessage(errorText, '請求的相機解析度或模式無法滿足，請嘗試調整裝置設定。', 'error');
                 } else {
                     showMessage(errorText, `無法啟動相機：${err.message || '未知錯誤'}`, 'error');
                 }
