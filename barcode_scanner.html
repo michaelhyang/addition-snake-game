@@ -54,8 +54,6 @@
             border-radius: 10px;
             overflow: hidden;
             background: #f5f5f5;
-            /* 移除 min-height，讓 #reader 內部元素決定高度 */
-            /* min-height: 250px; */ 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -65,27 +63,26 @@
         /* QuaggaJS2 將在 #reader 這個 div 內渲染它的相機畫面和 UI */
         #reader {
             width: 100%;
-            /* 使用 padding-top 來維持 16:9 的長寬比 */
             padding-top: 56.25%; /* (9 / 16) * 100% = 56.25% */
-            position: relative; 
-            overflow: hidden; /* 確保內容不溢出 */
+            position: relative;
+            overflow: hidden;
         }
-        
+
         /* QuaggaJS2 生成的視訊和畫布元素樣式調整 */
         #reader video, #reader canvas {
             width: 100%;
-            height: 100%; /* 填充父容器的高度 */
+            height: 100%;
             display: block;
             border-radius: 10px;
             position: absolute;
             top: 0;
             left: 0;
-            object-fit: cover; /* 確保視訊內容填滿容器而不變形 */
+            object-fit: cover;
         }
         /* 如果 Quagga 沒有初始化成功，保持容器可見 */
         #reader:empty {
-            min-height: 250px; /* 保持預留空間 */
-            background-color: #f5f5f5; /* 背景色 */
+            min-height: 250px;
+            background-color: #f5f5f5;
         }
 
         /* 紅色對準線 */
@@ -94,13 +91,13 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 2px; /* 線的粗細 */
-            background-color: #FF3B30; /* 紅色 */
+            height: 2px;
+            background-color: #FF3B30;
             transform: translateY(-50%);
-            z-index: 2; /* 確保在 video 和 canvas 之上 */
-            box-shadow: 0 0 10px rgba(255, 59, 48, 0.7); /* 發光效果 */
-            width: 80%; /* 線的寬度，可調整 */
-            margin: 0 auto; /* 水平居中 */
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(255, 59, 48, 0.7);
+            width: 80%;
+            margin: 0 auto;
         }
         /* 掃描線動畫 (可選) */
         .scan-line.active {
@@ -117,12 +114,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%; /* 框的寬度 */
-            height: 100px; /* 框的高度，根據條碼類型調整 */
-            border: 2px dashed rgba(255, 255, 255, 0.7); /* 白色虛線框 */
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* 遮罩效果 */
-            z-index: 1; /* 在 scan-line 下方，在 video/canvas 上方 */
-            border-radius: 8px; /* 圓角 */
+            width: 70%;
+            height: 100px;
+            border: 2px dashed rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            z-index: 1;
+            border-radius: 8px;
         }
         /* 如果掃描沒有啟動，隱藏對焦框和紅線 */
         .scan-elements-hidden .scan-line,
@@ -220,9 +217,8 @@
         }
 
         .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; /* 使用 Flexbox */
+            align-items: center; /* 垂直居中對齊 */
             background: white;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -231,14 +227,57 @@
             font-size: 0.95rem;
             word-break: break-all;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            justify-content: space-between; /* 將內容兩端對齊 */
         }
         .result-item:last-child {
             margin-bottom: 0;
         }
 
+        /* Checkbox 和 Delete button 的共同容器，用於右側對齊 */
+        .checkbox-and-delete {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; /* 防止被內容擠壓 */
+        }
+
+        /* Checkbox 樣式 */
+        .result-checkbox {
+            width: 30px; /* 與刪除按鈕相同大小 */
+            height: 30px; /* 與刪除按鈕相同大小 */
+            border: 1px solid #ccc;
+            border-radius: 50%; /* 圓形 */
+            appearance: none; /* 移除預設樣式 */
+            outline: none;
+            cursor: pointer;
+            background-color: white;
+            position: relative;
+            flex-shrink: 0; /* 防止被內容擠壓 */
+            margin-right: 10px; /* 與刪除按鈕間隔 */
+            display: flex; /* 用於居中內部勾勾 */
+            justify-content: center; /* 居中內部勾勾 */
+            align-items: center; /* 居中內部勾勾 */
+            font-size: 1.5rem; /* 調整勾勾大小，確保能填滿圓圈 */
+            color: transparent; /* 預設隱藏勾勾 */
+            transition: color 0.2s ease-in-out; /* 增加顏色過渡效果 */
+        }
+
+        /* 勾選時顯示綠色勾勾 */
+        .result-checkbox:checked {
+            color: #28a745; /* 綠色 */
+        }
+        /* 在選中狀態下，使用 ::after 插入勾勾符號 */
+        .result-checkbox:checked::after {
+            content: '\2713'; /* Unicode 勾勾符號 */
+            position: absolute; /* 相對於 checkbox 定位 */
+            line-height: 1; /* 調整行高以更好地垂直居中 */
+            text-align: center; /* 確保文本居中 */
+            font-weight: bold; /* 讓勾勾更粗 */
+            /* 因為 .result-checkbox 已經是 flex 居中了，這裡不需要 top/left/transform */
+        }
+
+
         .result-item .content {
-            flex-grow: 1;
-            margin-right: 10px;
+            flex-grow: 1; /* 讓內容區塊佔據剩餘空間 */
         }
         .result-item .content strong {
             display: block;
@@ -255,14 +294,15 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 1.2rem;
+            width: 30px; /* 與 checkbox 相同大小 */
+            height: 30px; /* 與 checkbox 相同大小 */
+            font-size: 1.2rem; /* 控制 X 的大小 */
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             transition: background-color 0.2s ease;
+            flex-shrink: 0; /* 防止被內容擠壓 */
         }
         .result-item .delete-btn:hover {
             background-color: #D70015;
@@ -308,22 +348,27 @@
                 height: 28px;
                 font-size: 1rem;
             }
+            .result-checkbox {
+                width: 28px; /* 響應式調整也保持一致 */
+                height: 28px;
+                font-size: 1.3rem; /* 響應式調整勾勾大小 */
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">條碼掃描器</div>
-        
+        <div class="header">條碼掃描器 (QuaggaJS2)</div>
+
         <div class="scanner-container" id="scanner-container">
             <div id="reader"></div> <div class="scan-line" id="scan-line"></div> <div class="focus-box" id="focus-box"></div> </div>
-        
+
         <div class="controls">
             <button id="toggle-scan-btn" class="btn">🎯 開始掃描</button>
             <button id="rescan-btn" class="btn">🔄 重新掃描</button>
-            <button id="clear-all-btn" class="btn clear-all">🗑️ 清除所有</button>
+            <button id="clear-all-btn" class="btn clear-all" title="勾選您想保留的項目">🗑️ 清除未勾選</button>
         </div>
-        
+
         <div id="status-message">📋 準備就緒，點擊開始掃碼</div>
 
         <div class="scanned-results-container">
@@ -343,12 +388,13 @@
                 this.clearAllBtn = document.getElementById('clear-all-btn');
                 this.statusMessageElement = document.getElementById('status-message');
                 this.scanLineElement = document.getElementById('scan-line');
-                this.focusBoxElement = document.getElementById('focus-box'); // 新增對焦框元素
+                this.focusBoxElement = document.getElementById('focus-box');
                 this.scannedResultsList = document.getElementById('scanned-results-list');
-                this.scannerContainer = document.getElementById('scanner-container'); // 取得 scanner-container 元素
+                this.scannerContainer = document.getElementById('scanner-container');
 
                 this.isScanning = false;
                 this.lastDetectedCode = null;
+                this.lastDetectedTimestamp = 0;
                 this.results = [];
                 this.nextResultId = 0;
 
@@ -371,14 +417,12 @@
                     this.toggleScanBtn.classList.add('stop');
                     this.rescanBtn.disabled = true;
                     this.scanLineElement.classList.add('active');
-                    // 掃描中顯示掃描線和對焦框
                     this.scannerContainer.classList.remove('scan-elements-hidden');
                 } else {
                     this.toggleScanBtn.textContent = '🎯 開始掃描';
                     this.toggleScanBtn.classList.remove('stop');
                     this.rescanBtn.disabled = false;
                     this.scanLineElement.classList.remove('active');
-                    // 掃描停止時隱藏掃描線和對焦框
                     this.scannerContainer.classList.add('scan-elements-hidden');
                 }
             }
@@ -400,8 +444,7 @@
                         type: "LiveStream",
                         target: document.querySelector('#reader'),
                         constraints: {
-                            // 保持理想解析度，讓瀏覽器選擇最接近的
-                            width: { ideal: 1280 }, 
+                            width: { ideal: 1280 },
                             height: { ideal: 720 },
                             facingMode: "environment"
                         }
@@ -409,7 +452,7 @@
                     locator: {
                         patchSize: "medium",
                         halfSample: true,
-                        locate: true, 
+                        locate: true,
                     },
                     decoder: {
                         readers: [
@@ -439,21 +482,20 @@
             onScanSuccess(result) {
                 if (result && result.codeResult && result.codeResult.code) {
                     const decodedText = result.codeResult.code;
-                    const format = result.codeResult.format;
+                    const currentTime = Date.now();
 
-                    if (this.lastDetectedCode === decodedText) {
+                    const DEBOUNCE_TIME = 5000; // 5 秒去重間隔
+                    if (this.lastDetectedCode === decodedText &&
+                        (currentTime - this.lastDetectedTimestamp < DEBOUNCE_TIME)) {
                         return;
                     }
 
                     this.lastDetectedCode = decodedText;
-                    
-                    setTimeout(() => {
-                        this.lastDetectedCode = null;
-                    }, 1000); // 1 秒內不重複識別
+                    this.lastDetectedTimestamp = currentTime;
 
                     this.playBeep();
-                    this.updateStatus(`✅ 掃描成功: ${decodedText}`, 'scanning'); 
-                    this.addResultToDisplay(decodedText, format);
+                    this.updateStatus(`✅ 掃描成功: ${decodedText}`, 'scanning');
+                    this.addResultToDisplay(decodedText, result.codeResult.format);
                 }
             }
 
@@ -514,22 +556,22 @@
                 this.updateStatus('🔄 重新啟動掃描中...', 'info');
                 await this.startScan();
             }
-            
+
             playBeep() {
                 try {
                     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     const oscillator = audioContext.createOscillator();
                     const gainNode = audioContext.createGain();
-                    
+
                     oscillator.connect(gainNode);
                     gainNode.connect(audioContext.destination);
-                    
+
                     oscillator.frequency.value = 800;
                     oscillator.type = 'sine';
-                    
+
                     gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
                     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                    
+
                     oscillator.start(audioContext.currentTime);
                     oscillator.stop(audioContext.currentTime + 0.1);
                 } catch (e) {
@@ -551,7 +593,8 @@
                     id: this.nextResultId++,
                     text: text,
                     format: format,
-                    timestamp: new Date().toLocaleString()
+                    timestamp: new Date().toLocaleString(),
+                    checked: false // 預設不勾選
                 };
                 this.results.push(newResult);
                 this.saveResultsToLocalStorage();
@@ -565,11 +608,12 @@
             }
 
             clearAllResults() {
-                if (confirm('確定要清除所有掃描結果嗎？')) {
-                    this.results = [];
+                // 提示用戶勾選正確值，避免誤刪
+                if (confirm('勾選您想保留的項目。確定要清除所有未勾選的掃描結果嗎？')) {
+                    this.results = this.results.filter(result => result.checked); // 只保留勾選的項目
                     this.saveResultsToLocalStorage();
                     this.renderResults();
-                    this.updateStatus('所有掃描結果已清除', 'info');
+                    this.updateStatus('所有未勾選的掃描結果已清除', 'info');
                 }
             }
 
@@ -584,21 +628,37 @@
                     this.clearAllBtn.disabled = true;
                 } else {
                     this.clearAllBtn.disabled = false;
-                    this.results.forEach(result => {
+                    // 新掃描結果應該顯示在最上方
+                    const reversedResults = [...this.results].reverse();
+                    reversedResults.forEach(result => {
                         const listItem = document.createElement('li');
                         listItem.className = 'result-item';
                         listItem.dataset.id = result.id;
 
+                        // 修改 HTML 結構，將 checkbox 和 delete button 放在一個容器內
                         listItem.innerHTML = `
                             <div class="content">
                                 <strong>${result.text}</strong>
                                 <span>格式: ${result.format} | ${result.timestamp}</span>
                             </div>
-                            <button class="delete-btn">✖</button>
+                            <div class="checkbox-and-delete">
+                                <input type="checkbox" class="result-checkbox" ${result.checked ? 'checked' : ''} data-id="${result.id}">
+                                <button class="delete-btn">✖</button>
+                            </div>
                         `;
 
                         const deleteButton = listItem.querySelector('.delete-btn');
                         deleteButton.addEventListener('click', () => this.deleteResult(result.id));
+
+                        const checkbox = listItem.querySelector('.result-checkbox');
+                        checkbox.addEventListener('change', (event) => {
+                            const itemId = parseInt(event.target.dataset.id);
+                            const item = this.results.find(r => r.id === itemId);
+                            if (item) {
+                                item.checked = event.target.checked;
+                                this.saveResultsToLocalStorage();
+                            }
+                        });
 
                         this.scannedResultsList.appendChild(listItem);
                     });
@@ -615,6 +675,11 @@
                 const storedNextId = localStorage.getItem('nextResultId');
                 if (storedResults) {
                     this.results = JSON.parse(storedResults);
+                    this.results.forEach(result => {
+                        if (typeof result.checked === 'undefined') {
+                            result.checked = false; // 載入舊數據時預設不勾選
+                        }
+                    });
                     this.nextResultId = storedNextId ? parseInt(storedNextId, 10) : (this.results.length > 0 ? Math.max(...this.results.map(r => r.id)) + 1 : 0);
                 } else {
                     this.results = [];
