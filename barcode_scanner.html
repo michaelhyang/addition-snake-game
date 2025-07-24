@@ -61,7 +61,7 @@
             width: 100%;
             height: 300px;
             border: none;
-            display: none;
+            /* QuaggaJS 會在此元素內創建 video 和 canvas */
         }
 
         .scanner-overlay {
@@ -307,7 +307,7 @@
             constructor() {
                 this.barcodes = [];
                 this.isScanning = false;
-                this.pauseScanning = false; // Add pauseScanning property
+                this.pauseScanning = false; // 控制暫停掃描以避免重複偵測
                 this.initializeElements();
                 this.bindEvents();
             }
@@ -321,8 +321,6 @@
                 this.exportBtn = document.getElementById('exportBtn');
                 this.clearBtn = document.getElementById('clearBtn');
                 this.scanner = document.getElementById('scanner');
-                this.video = null; // To store the video element
-                this.stream = null; // To store the media stream
             }
 
             bindEvents() {
@@ -337,7 +335,7 @@
                 this.status.className = `status ${type}`;
             }
 
-            async startScanning() {
+            startScanning() {
                 if (this.isScanning) return;
 
                 this.updateStatus('🔍 正在啟動相機...', 'scanning');
@@ -345,128 +343,84 @@
                 this.stopBtn.style.display = 'inline-block';
                 this.scanner.style.display = 'block';
 
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: "environment",
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
+                Quagga.init({
+                    inputStream: {
+                        name: "LiveStream",
+                        type: "LiveStream",
+                        target: this.scanner, // Target the DOM element
+                        constraints: {
+                            facingMode: "environment", // Use rear camera
+                            width: { min: 640, max: 1280 },
+                            height: { min: 480, max: 720 }
                         }
-                    });
-                    this.stream = stream;
-
-                    const video = document.createElement('video');
-                    video.srcObject = stream;
-                    video.setAttribute('playsinline', true);
-                    video.style.width = '100%';
-                    video.style.height = '100%';
-                    video.style.objectFit = 'cover';
-                    
-                    this.scanner.innerHTML = '';
-                    this.scanner.appendChild(video);
-                    this.video = video; // Store the video element
-
-                    video.play();
-                    this.isScanning = true;
-                    
-                    this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
-                    
-                    this.scanLoop();
-                    
-                } catch (err) {
-                    console.error('相機啟動失敗:', err);
-                    this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
-                    this.stopScanning();
-                }
-            }
-
-            scanLoop() {
-                if (!this.isScanning || this.pauseScanning || !this.video) {
-                    if (this.isScanning) {
-                        requestAnimationFrame(() => this.scanLoop());
-                    }
-                    return;
-                }
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                
-                if (this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
-                    canvas.height = this.video.videoHeight;
-                    canvas.width = this.video.videoWidth;
-                    
-                    context.drawImage(this.video, 0, 0, canvas.width, canvas.height);
-                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    
-                    this.scanWithQuagga(imageData);
-                }
-                
-                requestAnimationFrame(() => this.scanLoop());
-            }
-
-            scanWithQuagga(imageData) {
-                const centerX = imageData.width / 2;
-                const centerY = imageData.height / 2;
-                const scanWidth = Math.min(imageData.width * 0.8, 400);
-                const scanHeight = Math.min(imageData.height * 0.3, 150);
-                
-                const startX = Math.max(0, centerX - scanWidth / 2);
-                const startY = Math.max(0, centerY - scanHeight / 2);
-                
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = scanWidth;
-                canvas.height = scanHeight;
-                
-                const croppedImageData = context.createImageData(scanWidth, scanHeight);
-                
-                for (let y = 0; y < scanHeight; y++) {
-                    for (let x = 0; x < scanWidth; x++) {
-                        const sourceX = startX + x;
-                        const sourceY = startY + y;
-                        
-                        if (sourceX < imageData.width && sourceY < imageData.height) {
-                            const sourceIndex = (sourceY * imageData.width + sourceX) * 4;
-                            const targetIndex = (y * scanWidth + x) * 4;
-                            
-                            croppedImageData.data[targetIndex] = imageData.data[sourceIndex];
-                            croppedImageData.data[targetIndex + 1] = imageData.data[sourceIndex + 1];
-                            croppedImageData.data[targetIndex + 2] = imageData.data[sourceIndex + 2];
-                            croppedImageData.data[targetIndex + 3] = imageData.data[sourceIndex + 3];
-                        }
-                    }
-                }
-                
-                Quagga.decodeSingle({
-                    src: croppedImageData,
-                    numOfWorkers: 0,
+                    },
                     decoder: {
-                        readers: ["code_128_reader"]
-                    }
-                }, (result) => {
-                    if (result && result.codeResult) {
-                        const code = result.codeResult.code;
-                        const format = result.codeResult.format;
-                        
-                        if (format === 'code_128') { // Only process Code 128
-                            this.addBarcode(code);
-                            this.playBeep();
+                        readers: ["code_128_reader"],
+                        debug: { // Enable debug to see Quagga's processing
+                            drawBoundingBox: false,
+                            showFrequency: false,
+                            drawScanline: false,
+                            showPattern: false
                         }
+                    },
+                    locate: true // QuaggaJS will try to locate the barcode
+                }, (err) => {
+                    if (err) {
+                        console.error('Quagga 初始化失敗:', err);
+                        this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
+                        this.stopScanning();
+                        return;
                     }
+                    Quagga.start();
+                    this.isScanning = true;
+                    this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
+                });
+
+                Quagga.onDetected((result) => {
+                    if (this.pauseScanning) return; // 如果正在暫停，則不處理
+
+                    const code = result.codeResult.code;
+                    const format = result.codeResult.format;
+                    
+                    if (format === 'code_128') {
+                        // console.log('=== Quagga 掃描結果 ===');
+                        // console.log('條碼內容:', code);
+                        // console.log('條碼格式:', format);
+                        // console.log('=====================');
+                        
+                        this.addBarcode(code);
+                        this.playBeep();
+
+                        // 掃描成功後暫停掃描2秒，避免重複偵測
+                        this.pauseScanning = true;
+                        Quagga.stop(); // 停止 Quagga 引擎
+                        setTimeout(() => {
+                            this.pauseScanning = false;
+                            if (this.isScanning) { // 只有在仍然處於掃描模式下才重啟 Quagga
+                                Quagga.start();
+                                this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
+                            }
+                        }, 2000); // 暫停 2 秒
+                    }
+                });
+
+                // 處理掃描錯誤或沒有偵測到條碼的情況
+                Quagga.onProcessed((result) => {
+                    // This event fires frequently. You can use it for visual feedback
+                    // or to refine the scanning process if needed.
+                    // For now, we rely on onDetected for actual barcode additions.
                 });
             }
 
             stopScanning() {
                 if (!this.isScanning) return;
 
+                Quagga.stop(); // 停止 QuaggaJS，這也會停止相機串流
                 this.isScanning = false;
+                this.pauseScanning = false; // 重設暫停狀態
                 
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                }
-                
-                this.scanner.style.display = 'none';
-                this.scanner.innerHTML = '';
+                // 清除 QuaggaJS 在 scanner 內創建的元素
+                this.scanner.innerHTML = ''; 
                 this.startBtn.style.display = 'inline-block';
                 this.stopBtn.style.display = 'none';
                 this.updateStatus('📋 掃描已停止', 'ready');
@@ -475,6 +429,7 @@
             addBarcode(code) {
                 const cleanCode = code.trim();
                 
+                // 檢查是否已存在（不區分大小寫）
                 const exists = this.barcodes.some(item => 
                     item.code.toLowerCase() === cleanCode.toLowerCase()
                 );
@@ -493,14 +448,6 @@
                 this.barcodes.unshift(barcode);
                 this.renderBarcodes();
                 this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
-                
-                this.pauseScanning = true;
-                setTimeout(() => {
-                    this.pauseScanning = false;
-                    if (this.isScanning) {
-                        this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
-                    }
-                }, 2000);
             }
 
             renderBarcodes() {
