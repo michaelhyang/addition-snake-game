@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>條碼掃描系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxing-library/0.20.0/zxing-library.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -61,7 +61,7 @@
             width: 100%;
             height: 300px;
             border: none;
-            /* QuaggaJS 會在此元素內創建 video 和 canvas */
+            display: none;
         }
 
         .scanner-overlay {
@@ -272,7 +272,7 @@
     <div class="container">
         <div class="header">
             <h1>📱 條碼掃描系統</h1>
-            <p>使用手機相機掃描 Code 128 條碼</p>
+            <p>使用手機相機掃描各種條形碼</p>
         </div>
         
         <div class="content">
@@ -307,9 +307,16 @@
             constructor() {
                 this.barcodes = [];
                 this.isScanning = false;
-                this.pauseScanning = false; // 控制暫停掃描以避免重複偵測
+                this.codeReader = null;
                 this.initializeElements();
                 this.bindEvents();
+                this.initializeReader();
+            }
+
+            initializeReader() {
+                // 初始化 ZXing 條碼讀取器
+                this.codeReader = new ZXing.BrowserMultiFormatReader();
+                console.log('ZXing 條碼讀取器已初始化');
             }
 
             initializeElements() {
@@ -343,91 +350,91 @@
                 this.stopBtn.style.display = 'inline-block';
                 this.scanner.style.display = 'block';
 
-                Quagga.init({
-                    inputStream: {
-                        name: "LiveStream",
-                        type: "LiveStream",
-                        target: this.scanner, // Target the DOM element
-                        constraints: {
-                            facingMode: "environment", // Use rear camera
-                            width: { min: 640, max: 1280 },
-                            height: { min: 480, max: 720 }
+                // 創建視頻元素
+                const video = document.createElement('video');
+                video.setAttribute('playsinline', true);
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.objectFit = 'cover';
+                
+                this.scanner.innerHTML = '';
+                this.scanner.appendChild(video);
+                this.video = video;
+
+                // 使用 ZXing 開始掃描
+                this.codeReader.decodeFromVideoDevice(null, video, (result, err) => {
+                    if (result) {
+                        console.log('=== ZXing 掃描結果 ===');
+                        console.log('條碼內容:', result.text);
+                        console.log('條碼格式:', result.format);
+                        console.log('==================');
+                        
+                        // 過濾條碼格式和內容
+                        if (this.isValidBarcode(result)) {
+                            this.addBarcode(result.text);
+                            this.playBeep();
+                        } else {
+                            console.log('條碼格式不符，忽略');
                         }
-                    },
-                    decoder: {
-                        readers: ["code_128_reader"],
-                        debug: { // Enable debug to see Quagga's processing
-                            drawBoundingBox: false,
-                            showFrequency: false,
-                            drawScanline: false,
-                            showPattern: false
-                        }
-                    },
-                    locate: true // QuaggaJS will try to locate the barcode
-                }, (err) => {
-                    if (err) {
-                        console.error('Quagga 初始化失敗:', err);
-                        this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
-                        this.stopScanning();
-                        return;
                     }
-                    Quagga.start();
+                    
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        console.error('掃描錯誤:', err);
+                    }
+                }).then(() => {
                     this.isScanning = true;
                     this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
+                }).catch(err => {
+                    console.error('相機啟動失敗:', err);
+                    this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
+                    this.stopScanning();
                 });
+            }
 
-                Quagga.onDetected((result) => {
-                    if (this.pauseScanning) return; // 如果正在暫停，則不處理
-
-                    const code = result.codeResult.code;
-                    const format = result.codeResult.format;
-                    
-                    if (format === 'code_128') {
-                        // console.log('=== Quagga 掃描結果 ===');
-                        // console.log('條碼內容:', code);
-                        // console.log('條碼格式:', format);
-                        // console.log('=====================');
-                        
-                        this.addBarcode(code);
-                        this.playBeep();
-
-                        // 掃描成功後暫停掃描2秒，避免重複偵測
-                        this.pauseScanning = true;
-                        Quagga.stop(); // 停止 Quagga 引擎
-                        setTimeout(() => {
-                            this.pauseScanning = false;
-                            if (this.isScanning) { // 只有在仍然處於掃描模式下才重啟 Quagga
-                                Quagga.start();
-                                this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
-                            }
-                        }, 2000); // 暫停 2 秒
-                    }
-                });
-
-                // 處理掃描錯誤或沒有偵測到條碼的情況
-                Quagga.onProcessed((result) => {
-                    // This event fires frequently. You can use it for visual feedback
-                    // or to refine the scanning process if needed.
-                    // For now, we rely on onDetected for actual barcode additions.
-                });
+            isValidBarcode(result) {
+                const code = result.text;
+                const format = result.format;
+                
+                console.log('驗證條碼:', code, '格式:', format);
+                
+                // 檢查格式是否為 Code 128
+                if (format === ZXing.BarcodeFormat.CODE_128) {
+                    console.log('✅ Code 128 格式');
+                    return true;
+                }
+                
+                // 如果格式不對，但內容包含字母且長度合適，也接受
+                if (code.length >= 10 && /[A-Za-z]/.test(code)) {
+                    console.log('✅ 包含字母的長條碼，可能是誤識別的 Code 128');
+                    return true;
+                }
+                
+                console.log('❌ 格式不符:', format, '或內容不符');
+                return false;
             }
 
             stopScanning() {
                 if (!this.isScanning) return;
 
-                Quagga.stop(); // 停止 QuaggaJS，這也會停止相機串流
                 this.isScanning = false;
-                this.pauseScanning = false; // 重設暫停狀態
                 
-                // 清除 QuaggaJS 在 scanner 內創建的元素
-                this.scanner.innerHTML = ''; 
+                // 停止相機串流
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+                
+                this.scanner.style.display = 'none';
+                this.scanner.innerHTML = '';
                 this.startBtn.style.display = 'inline-block';
                 this.stopBtn.style.display = 'none';
                 this.updateStatus('📋 掃描已停止', 'ready');
             }
 
             addBarcode(code) {
+                // 清理條碼內容
                 const cleanCode = code.trim();
+                
+                console.log('準備添加條碼:', cleanCode);
                 
                 // 檢查是否已存在（不區分大小寫）
                 const exists = this.barcodes.some(item => 
@@ -448,6 +455,15 @@
                 this.barcodes.unshift(barcode);
                 this.renderBarcodes();
                 this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
+                
+                // 暫停掃描2秒避免重複掃描
+                this.pauseScanning = true;
+                setTimeout(() => {
+                    this.pauseScanning = false;
+                    if (this.isScanning) {
+                        this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
+                    }
+                }, 2000);
             }
 
             renderBarcodes() {
@@ -514,6 +530,7 @@
             }
 
             playBeep() {
+                // 簡單的提示音效果
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -532,8 +549,10 @@
             }
         }
 
+        // 初始化掃描器
         const scanner = new BarcodeScanner();
 
+        // 頁面載入完成後初始化顯示
         document.addEventListener('DOMContentLoaded', () => {
             scanner.renderBarcodes();
         });
