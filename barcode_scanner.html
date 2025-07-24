@@ -61,7 +61,13 @@
             width: 100%;
             height: 300px;
             border: none;
-            display: none;
+            display: none; /* 預設隱藏，啟動時顯示 */
+        }
+
+        #scanner video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 確保視頻填滿容器 */
         }
 
         .scanner-overlay {
@@ -272,7 +278,7 @@
     <div class="container">
         <div class="header">
             <h1>📱 條碼掃描系統</h1>
-            <p>使用手機相機掃描各種條形碼</p>
+            <p>使用手機後置相機掃描 Code 128 條碼</p>
         </div>
         
         <div class="content">
@@ -307,15 +313,17 @@
             constructor() {
                 this.barcodes = [];
                 this.isScanning = false;
-                this.codeReader = null;
+                this.codeReader = null; // ZXing 讀取器實例
                 this.initializeElements();
                 this.bindEvents();
                 this.initializeReader();
             }
 
             initializeReader() {
-                // 初始化 ZXing 條碼讀取器
-                this.codeReader = new ZXing.BrowserMultiFormatReader();
+                // 初始化 ZXing 條碼讀取器，只配置掃描 Code 128
+                this.codeReader = new ZXing.BrowserMultiFormatReader(null, {
+                    // hints: new Map([[ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.CODE_128]]])
+                });
                 console.log('ZXing 條碼讀取器已初始化');
             }
 
@@ -328,6 +336,7 @@
                 this.exportBtn = document.getElementById('exportBtn');
                 this.clearBtn = document.getElementById('clearBtn');
                 this.scanner = document.getElementById('scanner');
+                this.videoElement = null; // 用於儲存 ZXing 創建的 video 元素
             }
 
             bindEvents() {
@@ -342,7 +351,7 @@
                 this.status.className = `status ${type}`;
             }
 
-            startScanning() {
+            async startScanning() {
                 if (this.isScanning) return;
 
                 this.updateStatus('🔍 正在啟動相機...', 'scanning');
@@ -350,91 +359,95 @@
                 this.stopBtn.style.display = 'inline-block';
                 this.scanner.style.display = 'block';
 
-                // 創建視頻元素
+                // 創建視頻元素並添加到掃描器容器
                 const video = document.createElement('video');
+                video.id = 'videoInput'; // 為 ZXing 指定 ID
                 video.setAttribute('playsinline', true);
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.objectFit = 'cover';
                 
-                this.scanner.innerHTML = '';
+                this.scanner.innerHTML = ''; // 清空之前可能的內容
                 this.scanner.appendChild(video);
-                this.video = video;
+                this.videoElement = video;
 
-                // 使用 ZXing 開始掃描
-                this.codeReader.decodeFromVideoDevice(null, video, (result, err) => {
-                    if (result) {
-                        console.log('=== ZXing 掃描結果 ===');
-                        console.log('條碼內容:', result.text);
-                        console.log('條碼格式:', result.format);
-                        console.log('==================');
-                        
-                        // 過濾條碼格式和內容
-                        if (this.isValidBarcode(result)) {
-                            this.addBarcode(result.text);
-                            this.playBeep();
-                        } else {
-                            console.log('條碼格式不符，忽略');
+                try {
+                    // 使用 ZXing 開始從視頻設備解碼
+                    // 這裡指定 constraints 以使用後置相機 (environment facing mode)
+                    await this.codeReader.decodeFromVideoDevice({
+                        video: {
+                            facingMode: 'environment', // <--- 這裡改回 'environment'
+                            width: { ideal: 1280 }, // 理想寬度
+                            height: { ideal: 720 } // 理想高度
                         }
-                    }
-                    
-                    if (err && !(err instanceof ZXing.NotFoundException)) {
-                        console.error('掃描錯誤:', err);
-                    }
-                }).then(() => {
+                    }, this.videoElement, (result, err) => {
+                        if (result) {
+                            console.log('=== ZXing 掃描結果 ===');
+                            console.log('條碼內容:', result.text);
+                            console.log('條碼格式:', result.format);
+                            console.log('==================');
+                            
+                            // 嚴格過濾條碼格式為 Code 128
+                            if (this.isValidBarcode(result)) {
+                                this.addBarcode(result.text);
+                                this.playBeep();
+
+                                // 掃描成功後立即重置掃描器，實現防重複掃描
+                                this.codeReader.reset(); // 停止當前掃描和相機串流
+                                this.isScanning = false; // 標記為非掃描中
+
+                                // 在短暫延遲後重新啟動掃描
+                                setTimeout(() => {
+                                    // 只有在仍處於掃描模式（沒有手動停止）時才重新啟動
+                                    // 檢查停止按鈕是否還在顯示，表示用戶沒有手動停止
+                                    if (this.stopBtn.style.display === 'inline-block') { 
+                                        this.startScanning(); // 重新啟動掃描流程
+                                    } else {
+                                        this.updateStatus('📋 掃描已停止', 'ready');
+                                    }
+                                }, 2000); // 2秒的 debounce
+                            } else {
+                                console.log('條碼格式不符 (非 Code 128)，忽略');
+                            }
+                        }
+                        
+                        // ZXing.NotFoundException 是正常情況，表示沒有找到條碼
+                        if (err && !(err instanceof ZXing.NotFoundException)) {
+                            console.error('掃描錯誤:', err);
+                            // 可以在這裡更新錯誤狀態
+                        }
+                    });
+
                     this.isScanning = true;
                     this.updateStatus('📸 相機已啟動，請對準條碼', 'scanning');
-                }).catch(err => {
-                    console.error('相機啟動失敗:', err);
-                    this.updateStatus('❌ 無法啟動相機，請確認權限設定', 'error');
-                    this.stopScanning();
-                });
+
+                } catch (err) {
+                    console.error('相機啟動或解碼失敗:', err);
+                    this.updateStatus('❌ 無法啟動相機，請確認權限設定或裝置不支援', 'error');
+                    this.stopScanning(); // 確保停止狀態
+                }
             }
 
+            // 嚴格檢查條碼是否為 Code 128
             isValidBarcode(result) {
-                const code = result.text;
-                const format = result.format;
-                
-                console.log('驗證條碼:', code, '格式:', format);
-                
-                // 檢查格式是否為 Code 128
-                if (format === ZXing.BarcodeFormat.CODE_128) {
-                    console.log('✅ Code 128 格式');
-                    return true;
-                }
-                
-                // 如果格式不對，但內容包含字母且長度合適，也接受
-                if (code.length >= 10 && /[A-Za-z]/.test(code)) {
-                    console.log('✅ 包含字母的長條碼，可能是誤識別的 Code 128');
-                    return true;
-                }
-                
-                console.log('❌ 格式不符:', format, '或內容不符');
-                return false;
+                return result.format.toString() === ZXing.BarcodeFormat.CODE_128.toString();
             }
 
             stopScanning() {
                 if (!this.isScanning) return;
 
+                // 使用 ZXing 的 reset 方法停止掃描器和相機
+                if (this.codeReader) {
+                    this.codeReader.reset();
+                }
                 this.isScanning = false;
                 
-                // 停止相機串流
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                }
-                
+                this.scanner.innerHTML = ''; // 清空視頻元素
                 this.scanner.style.display = 'none';
-                this.scanner.innerHTML = '';
                 this.startBtn.style.display = 'inline-block';
                 this.stopBtn.style.display = 'none';
                 this.updateStatus('📋 掃描已停止', 'ready');
             }
 
             addBarcode(code) {
-                // 清理條碼內容
                 const cleanCode = code.trim();
-                
-                console.log('準備添加條碼:', cleanCode);
                 
                 // 檢查是否已存在（不區分大小寫）
                 const exists = this.barcodes.some(item => 
@@ -455,15 +468,6 @@
                 this.barcodes.unshift(barcode);
                 this.renderBarcodes();
                 this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
-                
-                // 暫停掃描2秒避免重複掃描
-                this.pauseScanning = true;
-                setTimeout(() => {
-                    this.pauseScanning = false;
-                    if (this.isScanning) {
-                        this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
-                    }
-                }, 2000);
             }
 
             renderBarcodes() {
@@ -530,7 +534,6 @@
             }
 
             playBeep() {
-                // 簡單的提示音效果
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
                 const gainNode = audioContext.createGain();
@@ -549,10 +552,8 @@
             }
         }
 
-        // 初始化掃描器
         const scanner = new BarcodeScanner();
 
-        // 頁面載入完成後初始化顯示
         document.addEventListener('DOMContentLoaded', () => {
             scanner.renderBarcodes();
         });
