@@ -89,6 +89,24 @@
             animation: pulse 2s ease-in-out infinite;
         }
 
+        .scanner-overlay::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #FF3B30;
+            transform: translateY(-50%);
+            box-shadow: 0 0 8px rgba(255, 59, 48, 0.6);
+            animation: scanLine 2s ease-in-out infinite;
+        }
+
+        @keyframes scanLine {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; box-shadow: 0 0 12px rgba(255, 59, 48, 0.8); }
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 0.3; }
             50% { opacity: 0.8; }
@@ -337,18 +355,10 @@
                     },
                     decoder: {
                         readers: [
-                            "code_128_reader"
-                        ],
-                        debug: {
-                            drawBoundingBox: true,
-                            showFrequency: false,
-                            drawScanline: true,
-                            showPattern: false
-                        }
-                    },
-                    locator: {
-                        patchSize: "medium",
-                        halfSample: true
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader"
+                        ]
                     }
                 }, (err) => {
                     if (err) {
@@ -386,8 +396,11 @@
             }
 
             addBarcode(code) {
-                // 清理條碼內容，移除可能的空白字符
+                // 清理條碼內容
                 const cleanCode = code.trim();
+                
+                console.log('原始掃描結果:', code);
+                console.log('清理後結果:', cleanCode);
                 
                 // 檢查是否已存在（不區分大小寫）
                 const exists = this.barcodes.some(item => 
@@ -396,12 +409,6 @@
                 
                 if (exists) {
                     this.updateStatus('⚠️ 此條碼已掃描過', 'scanning');
-                    return;
-                }
-
-                // 驗證條碼格式（英文字母+數字的組合）
-                if (!/^[A-Za-z0-9]+$/.test(cleanCode)) {
-                    this.updateStatus('⚠️ 條碼格式異常，請重新掃描', 'scanning');
                     return;
                 }
 
@@ -415,14 +422,14 @@
                 this.renderBarcodes();
                 this.updateStatus(`✅ 已新增條碼: ${cleanCode}`, 'scanning');
                 
-                // 暫停掃描1.5秒避免重複掃描
+                // 短暫暫停避免重複掃描
                 Quagga.stop();
                 setTimeout(() => {
                     if (this.isScanning) {
                         Quagga.start();
                         this.updateStatus('📸 繼續掃描其他條碼', 'scanning');
                     }
-                }, 1500);
+                }, 800);
             }
 
             renderBarcodes() {
