@@ -196,9 +196,10 @@
         class BarcodeScannerApp {
             constructor() {
                 // ZXing Code Reader 實例，只掃描 CODE_128 格式
-                this.codeReader = new ZXing.BrowserMultiFormatReader(null, {
-                    formats: [ZXing.BarcodeFormat.CODE_128]
-                });
+                //this.codeReader = new ZXing.BrowserMultiFormatReader(null, {
+                //    formats: [ZXing.BarcodeFormat.CODE_128]
+                //});
+                this.codeReader = new ZXing.BrowserMultiFormatReader();
                 
                 // DOM 元素引用
                 this.videoElement = document.getElementById('video');
