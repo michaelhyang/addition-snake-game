@@ -354,14 +354,18 @@
                         }
                     },
                     decoder: {
-                        readers: ["code_128_reader"],
+                        readers: [
+                            "code_128_reader",
+                            "ean_reader",
+                            "ean_8_reader"
+                        ],
                         multiple: false
                     },
                     locator: {
-                        patchSize: "large",
-                        halfSample: false
+                        patchSize: "medium",
+                        halfSample: true
                     },
-                    numOfWorkers: 2,
+                    numOfWorkers: 4,
                     frequency: 10
                 }, (err) => {
                     if (err) {
@@ -385,22 +389,23 @@
                     console.log('條碼格式:', format);
                     console.log('條碼長度:', code.length);
                     console.log('是否包含字母:', /[A-Za-z]/.test(code));
+                    console.log('原始資料:', data.codeResult);
                     console.log('================');
                     
-                    // 只接受 Code 128 格式的結果
-                    if (format !== 'code_128') {
-                        console.log('格式不符，忽略此次掃描');
-                        return;
+                    // 優先接受 Code 128，但不完全拒絕其他格式
+                    if (format === 'code_128') {
+                        console.log('✅ Code 128 格式，直接使用');
+                        this.addBarcode(code);
+                        this.playBeep();
+                    } else if (code.length >= 10 && /[A-Za-z]/.test(code)) {
+                        console.log('✅ 包含字母的長條碼，可能是 Code 128 被誤識別');
+                        this.addBarcode(code);
+                        this.playBeep();
+                    } else {
+                        console.log('❌ 格式不符或純數字，可能不是目標條碼');
+                        // 還是顯示，但加上警告
+                        this.updateStatus(`⚠️ 掃描到 ${format}: ${code}`, 'scanning');
                     }
-                    
-                    // 檢查條碼長度是否合理（你的條碼是13個字符）
-                    if (code.length < 10 || code.length > 20) {
-                        console.log('條碼長度異常，忽略此次掃描');
-                        return;
-                    }
-                    
-                    this.addBarcode(code);
-                    this.playBeep();
                 });
             }
 
